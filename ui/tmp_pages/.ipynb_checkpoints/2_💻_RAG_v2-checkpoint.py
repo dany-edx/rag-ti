@@ -1,0 +1,95 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+st.title("Jupyterlite in Streamlit")
+st.sidebar.header("Configuration")
+components.iframe(
+    "https://www.youtube.com/embed/px239v5o6xU?si=B_md0e5ZECU4VNFg",
+    height=500
+)
+
+st.write(
+        f'<iframe src="http://qcells-us-rag.westus2.cloudapp.azure.com:5678/"></iframe>',
+        unsafe_allow_html=True,
+    )
+
+# <iframe width="400" height="215" src="https://www.youtube.com/embed/LMQ5Gauy17k" title="YouTube video player" frameborder="0" allow="accelerometer; encrypted-media;"></iframe>
+# '''
+
+# markdown = """
+# ### HTML in markdown is ~quite~ **unsafe**
+# <blockquote>
+#   However, if you are in a trusted environment (you trust the markdown). You can use allow_html props to enable support for html.
+# </blockquote>
+
+# * Lists
+# * [ ] todo
+# * [x] done
+
+# Math:
+
+# Lift($L$) can be determined by Lift Coefficient ($C_L$) like the following
+# equation.
+
+# $$
+# L = \\frac{1}{2} \\rho v^2 S C_L
+# $$
+
+# ~~~py
+# import streamlit as st
+
+# st.write("Python code block")
+# ~~~
+
+# ~~~js
+# console.log("Here is some JavaScript code")
+# ~~~
+
+# """
+
+# table_markdown = '''
+# A Table:
+
+# | Feature     | Support              |
+# | ----------: | :------------------- |
+# | CommonMark  | 100%                 |
+# | GFM         | 100% w/ `remark-gfm` |
+# '''
+
+# st.session_state.setdefault(
+#     'past', 
+#     ['plan text with line break',
+#      'play the song "Dancing Vegetables"', 
+#      'show me image of cat', 
+#      'and video of it',
+#      'show me some markdown sample',
+#      'table in markdown']
+# )
+# st.session_state.setdefault(
+#     'generated', 
+#     [{'type': 'normal', 'data': 'Line 1 \n Line 2 \n Line 3'},
+#      {'type': 'normal', 'data': f'<audio controls src="{audio_path}"></audio>'}, 
+#      {'type': 'normal', 'data': f'<img width="100%" height="200" src="{img_path}"/>'}, 
+#      {'type': 'normal', 'data': f'{youtube_embed}'},
+#      {'type': 'normal', 'data': f'{markdown}'},
+#      {'type': 'table', 'data': f'{table_markdown}'}]
+# )
+
+# st.title("Chat placeholder")
+
+# chat_placeholder = st.empty()
+
+# with chat_placeholder.container():    
+#     for i in range(len(st.session_state['generated'])):                
+#         message(st.session_state['past'][i], is_user=True, key=f"{i}_user")
+#         message(
+#             st.session_state['generated'][i]['data'], 
+#             key=f"{i}", 
+#             allow_html=True,
+#             is_table=True if st.session_state['generated'][i]['type']=='table' else False
+#         )
+
+#     st.button("Clear message", on_click=on_btn_click)
+
+# with st.container():
+#     st.text_input("User Input:", on_change=on_input_change, key="user_input")

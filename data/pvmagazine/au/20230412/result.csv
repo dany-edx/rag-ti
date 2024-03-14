@@ -1,0 +1,221 @@
+﻿url,tag,author,updated_date,title,contents
+https://www.pv-magazine-australia.com/2023/04/12/zero-solar-export-limits-to-soon-be-heavily-restricted/,"LEGAL,POLICY,RESIDENTIAL PV,AUSTRALIA",BELLA PEACOCK,"APRIL 12, 2023",Zero solar export limits soon to be heavily restricted,"Static zero export limits for rooftop solar systems will soon only be permitted in “exceptional circumstances,” the Australian Energy Regulator (AER) has said, handing down strict new rules. It is cracking down on the practice, outlining a series of conditions Distribution Network Service Providers (DNSPs) must meet before they can apply a static zero export limit.
+Zero export limits – the practice of barring solar households from exporting any of their surplus solar energy into the grid – have long been criticised as a blunt, inequitable tool. Networks have used them in the past, however, under the claim that the high penetration of rooftop solar systems in some areas of Australia’s impacts their capacity to maintain local voltage stability.
+While the practice of zero export limits was already becoming rarer, the AER’s new rules will ensure this. 
+Under the rules, networks will only be permitted to impose a static zero export limit if the solar system “will have a high probability of resulting in the distribution network service provider not meeting a regulatory obligation or to maintain the network within its technical limits,” the decision states.
+Even if the network needs to increase its grid capacity to allow for a “reasonable export capacity,” the AER mandate this be explored. “If the cost to augment the network assets is only marginally higher than the benefits, the distribution network service provider must not impose a static zero export limit.”
+Before imposing a static zero export limit, the network must:
+Inverters and devices which enable exports from rooftop solar systems to respond to network conditions are becoming increasingly available in Australia today. This is largely in response to the South Australian government’s new “Dynamic Export” program coming into effect in July. This will  require all new rooftop systems be fitted with software to allow local provider, SA Power Networks, to dynamically control solar exports. Those instructions will be based on local network conditions, and are anticipated to significantly increase household’s solar exports overall.
+Dynamic exports underpinned by technological advancements relegate static limits to the “unreasonable” basket, it seems.
+The new export limit rules will be introduced across Australia in the following stages:
+The AER’s final guideline can be found here.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-australia.com/2023/04/12/paul-mcardles-analysis-of-electricity-usage-and-solar-production-at-home/,"OPINION & ANALYSIS,RESEARCH,RESIDENTIAL PV,AUSTRALIA,QUEENSLAND",,"APRIL 12, 2023",Paul McArdle’s analysis of his electricity usage (and solar production) at home,"From Watt Clarity
+As I’ve done on rare occasions in the past (noted here in 2018, for instance) I thought it might be a learning for me to invest a bit more time in diving into the numbers in order to learn more from this microscopic example that might pertain to the broader energy transition.
+Before getting into some data, readers might like to keep in mind some key dates with respect to our own journey at home:
+We lived in an old Queenslander that suffered from poor energy efficiency.
+Late 2012 we moved out for a period of a bit less than a year in order to allow for a major renovation of our home.
+A small part of this renovation included the installation of a 5kW rooftop solar system prior to the cut-off of the 44c Feed-in-Tariff legislated by the Queensland Government.
+We did not shop around much in choosing a retailer at the time, so went with one of the big brands (we chose AGL Energy – but that’s not really relevant for the purpose of this article).
+In 2017 we upgraded our monitoring of what was happening with our own electricity usage and production at home, with the addition of the Solar Analytics monitoring gadget, and we’re grateful we did.
+Soon after we’d done this I wrote about ‘some initial musings about my own rooftop solar learning exercise’.
+
+All of this contributed to higher electricity consumption at home through 2020, 2021 and 2022 than what would have otherwise been the case.
+With the above in mind, you might find the following of some interest (a subset of readers might be able to help me out with answers to the questions I have asked!)
+One of the things that prompted us to invest time this weekend in putting this analysis together was the fact that:
+1)  We’ve watched the cash refunds from our chosen retailer reduce steadily over the past couple years;
+2)  This has happened to the point where we even had to make a small payment* of a bill in the most recent round.
+*   I know, we’re one of the fortunate ones who’ve not had to do this for a little over a decade, but it still was a bit of a shock.
+Knowing that this particular home utility service would be of interest to us over time we’ve retained copies of every electricity statement we’ve received since 2012 – hence over the weekend part of time time invested came in reconstructing this trend of daily average net consumption at home, and daily average net export from our rooftop PV system:
+
+In this chart, and others below, we’ve used time on the x-axis but have placed the data at the end of each billing period.  The cadence of the data is a little odd, though … for two main reasons:
+1)  In the past 6 months our retailer has upped their billing frequency to monthly, for reasons we’ve not yet explored.
+2)  Prior to that time the billing frequency was consistently on a quarterly basis – however you’ll sometimes see more than 4 dots in a given year, and that’s because I’ve broken apart any bill that contained any change in the charging component … either:
+(a)  Electricity usage charges (discussed below); or
+(b)  Retailer add-on to the 44c Government-mandated FIT …
+i.  which in our case is now down to zero …
+ii.  little wonder that it’s now zero, given the rise-and-rise of negative prices in the QLD region (this report to the end of 2020) …
+iii.  driven by the popularity of solar PV in QLD (with wind a much lesser share here) and the continued presence of thermal generation for the ‘keeping the lights on services’ they all still provide.
+The two series shown are:
+1)  the average daily net exports from the solar system (i.e. at times when the solar system is exporting); and
+2)  the average daily import from the grid (i.e. at times when the solar system was not exporting).
+3)  hence be aware that there’s essentially a third data series that’s unable to be shown here and that is the ‘missing’ amount of rooftop PV production that’s not exported because it’s been consumed onsite through each day.
+With respect to the trend above, many observations can be made – but I thought it particularly useful to highlight the following:
+Key Observation #1)  Data understandability
+It’s understandable why the two different data sets published on the bill are chosen that way … after all, they are the ones that are used to determine our bill (or payment) each quarter/month.
+(a)  The Feed-in-Tariff is a net feed in tariff; and
+(b)  We only pay for imports from the grid, not exports … at least in volumetric terms (though the move to increasing daily charge, noted below, is partly intended to address that).
+However that does not mean that they are the data sets I’d ideally like to have for this form of analysis.
+What would be better than the two data sets above would be also having the ‘missing’ 3rd data series (i.e. the solar production that’s self-consumed onsite each day) as this would better enable me to answer the other questions I have about how our house is performing.  Given we don’t have that, we’ll just have to do the best we can – whilst remembering some data is unfortunately missing.
+Key Observation #2)  The value of energy efficiency
+Having lived the ‘before’ and ‘after’ performance of our home my family clearly knows that they’d rather be living in a ‘post renovation’ world.
+Leaving all the other reasons to one side for a moment, the value of a more energy-efficient design of home can be clearly seen in the daily average net consumption before and afterwards:
+(a)  Post renovation the red line is net energy consumption:
+i.  So also shows the invisible effect of production from solar consumed internally;
+ii.  But at least some of the difference is due to better energy efficiency (LED lights, better insulation, better use of passive heating and cooling and so on).
+(b)  Coincidentally, last week the Energy Efficiency Council released its flagship report ‘Clean Energy, Clean Demand’ which I have not read, but presume includes a major focus on energy efficiency.
+Key Observation #3)  Appropriate sizing for a rooftop solar system?
+This observation is really more of a question than an observation… in our case the average daily net export from the rooftop system consistently exceeds our daily net import from the grid.
+In a ‘if-you-say-if-fast-it’s-misleadingly-simple’ kind of way, we could net the two off and see that in net terms we’re contributing a benefit to the grid.
+(a)  Part of this thinking revolves around the mindset that ‘the grid’ is some relatively infinite pool in which we can bank surplus to draw down on later as our solar declines and night-time demand rises … in our case leaving the surplus amount in the grid for collective benefit.
+(b)  But as readers here will know we’ve said before ‘the NEM is a complex place’ and the reality is much more nuanced than that.
+Seeing the two series side-by-side like that does make me wonder what type of target we should be aiming for, in daily average terms, in terms of net injections or withdrawals from the grid?
+(a)  What sort of advice are residential energy users receiving these days when they are exploring how much solar to install?
+(b)  Is it based on ‘install how much you have roof space for, and can afford’, or some other criteria?
+Key Observation #4)  Net exports from solar has been depressed for several years
+The last billing period that’s seen daily average solar exports approaching 20kWh per day was the ~90-day period ending 29th November 2019.
+In the more than 3 years since that time, it’s clear to see that net solar exports have been considerably lower (especially so in the ~90 day period ending 2nd June 2022).  There are a couple reasons for this, including the following:
+Reason #1 = the rise of COVID drove increased time at home (for work and school), which contributed to higher electricity consumption during the day, and so lower net exports
+… readers might recall this series of analytical articles written during the period about how COVID might have shifted the location of, and otherwise affected, electricity demand.
+Reason #2 = this coincided with the three-years of consecutive La Nina weather pattern that delivered cooler & wetter periods that depressed rooftop solar production and contributed to higher electricity load for lighting and (in the cooler months) heating.
+… one of our readers has pointed out Solar Analytics wrote about ‘How La Nina impacts your rooftop solar!’ on 27th Jan 2023.
+Possible Reason #3 = there’s a 3rd factor possibly contributing (which is part of the reason why we started this analysis over the weekend) being concerns that the performance of our solar system has degraded compared with when it was installed a little over 10 years ago now.
+(a)  Through the analysis included in this article we’re trying to ascertain the extent to which this has actually occurred (if at all);
+(b)  Perhaps some of our more learned readers who work in this area can help us out?
+Key Observation #5)  Electricity consumption is up (particularly in winter)
+Looking back over ~10 years it’s apparent that our highest electricity draw from the grid* has occurred in winter periods.
+* readers should keep in mind that ‘draw from the grid’ is not the same as gross consumption, which is invisible in this analysis given the amount of solar locally generated that’s been consumed onsite.  Whether that share is higher in winter or not is unable to be ascertained here … it certainly would have been different in the 2020-2022 period compared to the years beforehand.
+Across the winter periods, there’s been a fair degree of difference … but there’s a clear growth in daily average net ‘draw from the grid’ from winter 2019 to winter 2020 to winter 2021, and especially to winter 2022.  Winter 2022 stands out in memory because it was colder earlier, and the period leading into it was also cloudy and wet.
+Key Observation #6)  Illustrating factors in the ‘2022 Energy Crisis’
+Readers here will recall the many articles written as the whole of the NEM progressed through the ‘2022 Energy Crisis’.
+In the trended consumption and production chart above we see a micro-example of what was the case more broadly in terms of some of the triggers for the event:
+(a)  In the ~90 day period to the 2nd June 2022 we see the daily average net export from rooftop PV being the lowest experienced since the panels were installed (excluding a period in 2015 where the panels were removed for a number of weeks whilst the roof was being replaced after the hail storm of 2014).
+In this analysis published in September 2022 we’d concluded that aggregate solar production across QLD and NSW was disappointingly low through Q2 2022, so it’s not a surprise to see such a conclusion mirrored in our own household data.
+(b)  In the 14 day period to 16th June 2022 we see daily average consumption outside of solar hours spike above 20kWh per day.
+i.  My recollection is that this was due to the early onset of cold weather;
+ii.  Which I’ve confirmed by spot checking these days in the Solar Analytics data.
+Being more focused on the wholesale end of the market I’ve heard discussion about degradation of solar PV performance over time (large scale and small) but have not really focused too much on it … however even before we’d put the above trend together I had started wondering whether our solar system had begun degrading in performance.
+There are several reasons for this concern:
+1)  Hearing about such degradation before means I am aware that it can happen (though I’ve not really invested time to look into the circumstances);
+2)  Even with the knowledge that the above green line shows daily average net exports to the grid (i.e. I am aware that it’s not gross production) the tendency is to look at the trended line above and see the drop from the end of 2019 onwards and be suspicious about causes.
+3)  In the sporadic use we’ve made of Solar Analytics data since 2017, and PV output data beforehand, I’ve got this nagging thought that the output used to be higher at times.
+So with the above in mind we’ve chosen to look at November months (in part because it appears in the longer-term trend that the 3-month billing period ending 29th November 2019 was the last period showing average production approaching 20kWh per day) and work backwards…
+Here’s a ‘sunny day’ profile during that month – being 26th November 2022:
+
+Note that the peak production is may not even reach 3.5kW for a 5kW installed system.
+… acknowledging that my memory is not infallible, but I still have a strong feeling that I’d seen times in the past where the peak production of our solar system was in excess of 4kW on similar ‘sunny day’ scenarios at summertime:
+(a)  I’m a bit hazy on whether it ever actually reached 5kW, but would swear that it was regularly above 4kW in the ‘early days’.
+(b)  I also note that 26th November 2022 was not actually during peak summer … so (remembering what Dan wrote about latitude here, but also conscious of high temperatures impacting peak performance) I wonder when ‘peak’ solar output would be expected to occur in Brisbane?
+Here’s the rolled up daily kWh production profiles across a span of time around November of that year:
+
+In this date range we see that 2nd November 2022 (selected) shows 30.7KWh for the day, which appears to be somewhat higher than that shown for 26th November 2022.  Let’s compare this with previous November periods…
+Here’s a ‘sunny day’ profile for 13th November 2021:
+
+Eyeballing this compared to the profile for 26th November 2021, we see that this shape does get much closer to 4kW peak output around the middle of the day …
+(a)  so higher than shown above for 26th November 2022
+(b) … but there might be different reasons why this was the case.
+Here’s a trend of daily aggregates containing November 2021 – highlighting the daily production of 30.8kWh on the same day as the above:
+
+… but note in the same trend for November 2022 that the 2nd November 2022 produced 30.7kWh.
+In this year, the 26th November 2020 was a ‘sunny day’ scenario:
+
+Again this day looks to have somewhat higher yield shape than shown for 26th November 2022.  Here’s the rolled up daily kWh production profiles across a span of time around November of that year:
+
+The highlighted day (6th Nov 2020) shows 29.6kWh gross production.
+In this year, the 12 November 2019 was a ‘sunny day’ scenario:
+
+Here’s the rolled up daily kWh production profiles across a span of time around November of that year:
+
+This trend has 5th November 2019 highlighted (at 29.1kWh).
+In this year, the 26 November 2018 was a ‘sunny day’ scenario:
+
+Here’s the rolled up daily kWh production profiles across a span of time around November of that year:
+
+The highlighted day (of 23rd Nov 2018) is three days earlier than the half-hourly profile shape above and yielded 31.1kWh.
+In this year, the 4th November 2017 was a ‘sunny day’ scenario:
+
+Here’s the rolled up daily kWh production profiles across a span of time around November of that year:
+
+The same day (4th Nov 2017) is highlighted, and saw 28.5kWh produced in gross terms.
+As noted above, it was in 2017 that we deployed the Solar Analytics monitoring system, so we don’t have the same level of visibility before that.
+We were using the freely accessible ‘PV output’ system prior to that time to occasionally check what was happening to our system.  I had a quick look over the weekend but can’t find records in PV output to match my vague recollection that we’d seen peak output well past 4kW in the early period of the use of the solar system.
+Seeing (in the longer trend above from bill data) that we’d averaged 20kWh net exports per day in the 65-day period to 4th November 2013 (i.e. just in spring) makes me wonder, though…
+Walking through the sample of available data over 6 years of available history, there does not appear to be a clearly discernable drop in gross output for our solar system – at least from 2017 to 2022.    If there was degradation, is it possible that it would manifest in different ways, or have been seen earlier?  Perhaps one of our more learned readers could help me understand more?
+Part of my task over the weekend was to ‘shop around’ for a better electricity retail offering … which for us means possibly:
+1)  trading off the rates offered by retailers for any net draw from the grid
+2)  against any adder on top of the 44c legislated FIT (at least out till scheme conclusion in 2028).
+Thankfully I now have 10 years of net consumption and net production history that will make it easier to get a more accurate comparison.
+I thought it might be useful to summarise the background information I’ve come across in this process, which remains ongoing:
+1)  The Queensland Competition Authority monitors solar feed-in tariffs in SEQ, as directed by the Minister responsible for energy.  In March 2013 (i.e. ~ 10 years ago) they published the report ‘Estimating a Fair and Reasonable Solar Feed-in Tariff for Queensland ’ that might be useful.  In a quick skim I found these two points under the 9 x ‘Key Findings of particular interest to me:
+Key Finding 3/9 = There is no compelling evidence to support a regulated, mandatory minimum feed-in tariff for customers in the South East Queensland retail electricity market.
+Key Finding 9/9 = Government could consider moving PV customers to Tariff 12 which would expose them to a more cost-reflective fixed charge than they face under current flat residential tariffs. In this regard, it would go some way to reducing the problem of PV customers avoiding a portion of the true cost of their network access due to their net consumption profile, which leads to higher average variable network charges. 
+2)  The Queensland Government provides some information on this web page, but it mainly points to Energy Made Easy, which is operated by the AER.
+3)  The Energy & Water Ombudsman Queensland provides this page that contains a list of electricity retailers:
+… in my scan on Monday 10th April I counted 44 of them, but I’m aware that not all of them might be accepting new clients at this time (for instance – some names are familiar to me, having experienced problems during the 2022 Energy Crisis and having closed to new business at that time).
+4)  Another list worth referencing is the ‘Public register of authorised retailers & authorisation applications’ maintained by the AER.
+(a)  I would expect that, for legal reasons, this list would be the most complete and current;
+(b)  I noted that it includes retailers who have had their licence revoked, or have surrendered their licence (including those caught up in the 2022 Energy Crisis).
+5)  The government-funded ‘comparison site’ at EnergyMadeEasy.gov.au is another useful reference point.
+… in a brief scan on Monday 10th April I was given 253 different offers (no wonder people get confused!) … but this narrowed down to only 22 so called ‘lowest price plans from each retailer’.
+6)  For completeness it’s worth noting that there are a number of privately operated comparison sites (some advertise prolifically on TV and through other medium)  that some people might choose to use – they are not for me, however.
+With the above as background I have started the process of shopping around to compare different retailer offerings, but have not yet reached a conclusion (other than that it’s not the most enjoyable task).
+One curiosity to me was the chopping-and-changing of the way in which our current retailer has changed around the three main components of the electricity usage charge:
+
+I’m aware that these costs also bundle together how our retailer has chosen to reflect the charges they must pay to the DNSP we connect into (in our case this is the Energex part of Energy Queensland), and then recover from us. Whatever mechanisms the DNSP might be using to try to incentivise behaviours might be completely hidden by the time they get to the customer’s bill.
+As highlighted in the image above, there’s essentially now three different levers that are being pulled:
+Lever 1)  At the top, more recently we see that the retailer has added in a Demand Charge (i.e. $ per kW) …
+(a)  at a larger C&I scale I’m aware that this might be related to peak demand onsite, or demand at time of network peak, or something of that type
+(b)  but our bills at home are not clear about the basis for how this is being charged (and/or I’ve just not invested enough time to understand).
+Lever 2)  There’s always existed a Volumetric Charge (i.e. $ per kWh) based on the volume of net imports drawn from the grid.  This, in particular, would help the retailer cover their costs in buying wholesale energy to supply our shortfall during non-solar hours.
+Lever 3)  At the bottom of the image we see that there’s been an escalation in a Daily Charge ($ per day) that I presume is just to cover the costs of connecting to the network that are, sort of, independent of how we use the grid.
+Given the persistent concerns about a ‘death spiral’ with escalating costs for those who are unable to reduce their costs through deployment of rooftop PV, I was interested to see how there’s already been a few cycles in how our current retailer has chosen to break these components of charge apart.
+For completeness I thought it would be useful to include this trend of the payments made to us by our retailer over the period since the installation of the solar PV:
+
+This trend shows the financial side of our electricity account with our current retailer.  We can see both:
+1)  That the cumulative benefit of rooftop PV under the 44c FiT (which I’ve noted before has been overly generous):
+(a)  amounts to over $12,000 purely in cash payments;
+(b)  which is slightly over what we paid to install the system in the first place (excluding NPV considerations, of course);
+(c)  But also does not take into account the other benefit to-date of the fact that we’ve not paid our cash for an electricity bill in all that time, either.
+2)  However we can also see that the benefit per bill has been declining since the end of 2019 (even to the point of a slight charge in the two most recent bills).
+That’s all for now…
+–
+About the author: Paul McArdle is one of three founders of Global-Roam back in 2000, Paul has been CEO of the company since that time. As an author on WattClarity, Paul’s focus has been to help make the electricity market more understandable.
+The views and opinions expressed in this article are the author’s own, and do not necessarily reflect those held by pv magazine.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-australia.com/2023/04/12/adelaide-company-granted-license-to-explore-hydrogen-storage-in-sas-underground-salt-caverns/,"HYDROGEN,MARKETS,TECHNOLOGY AND R&D,UTILITY SCALE STORAGE,AUSTRALIA,SOUTH AUSTRALIA",BELLA PEACOCK,"APRIL 12, 2023",Adelaide company granted license to explore hydrogen storage in SA’s underground salt caverns,"In the second piece of hydrogen news from South Australia’s Eyre Peninsular today, Adelaide-based tech company EntX has been granted permission to examine the potential for storing hydrogen in underground salt caverns near the town of Elliston.
+EntX’s newly granted Gas Storage Exploration Licence will allow the company to start early exploration work on the Polda Basin salt deposits – which were flagged by Australian Resources Minister Madeleine King as a potential storage location for hydrogen, following research from Geoscience Australia in 2022.
+South Australia has the nation’s most up-to-date hydrogen exploration regulations which have led to something of a ‘gold hydrogen’ rush in the state. These exploration regulations extend to hydrogen storage in underground salt caverns – a pathway which has a foothold globally.
+Image: Guilhem Vellut, flickr
+Salt deposits form naturally underground, and are increasingly being used to store hydrogen gas because of their low permeability which can trap the notoriously difficult hydrogen molecule. In the Netherlands and the US massive salt cavern hydrogen storage projects are already underway, with Australia’s Future Fuels Cooperative Research Centre recently finding Australia could potentially store 310 million tonnes (38,000 PJ) of hydrogen underground in places like salt caverns.
+Coming back to EntX’s plan, the company, formerly known as PhosEnergy, says it would create the hydrogen storage by drilling into the Polda Basin salt deposit and pouring in freshwater. The Polda Basin’s salt deposits are thought to be one to two kilometres underground and extend hundreds of kilometres into the sea. 
+This storage exploration is part of EntX’s bigger plan to also produce hydrogen on the Eyre Peninsular, dubbing the project the Western Eyre Green Hydrogen Project. Still in the early stages, the company is currently looking to produce a feasibility study into the Western Eyre project and is aiming for a final investment decision in 2025.
+“Coupling [Western Eyre’s] renewable energy potentials together with the storage of hydrogen, which has always been a challenge in the development of large hydrogen projects, we think we can develop one of the Eyre Peninsula and South Australia’s biggest hydrogen projects,” EntX’s general manager of hydrogen and clean fuels, Glenn Toogood, told the ABC.
+Toogood said the salt cavern hydrogen storage component alone would be a $4 billion (USD 2.67 billion) project. EntX is an unlisted public company that has a wide ranging portfolio, holding stakes in clean energy endeavours to advanced manufacturing in sectors like space and defence. 
+The company is also developing a 40 MW hydrogen facility for Kimberly-Clark Australia’s Millicent Mill in the southeast of South Australia.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-australia.com/2023/04/12/5-gw-green-hydrogen-project-announced-for-sas-eyre-peninsula/,"HYDROGEN,MARKETS,STRATEGIC ALLIANCES,UTILITY SCALE STORAGE,AUSTRALIA,CANADA,SOUTH AUSTRALIA",BELLA PEACOCK,"APRIL 12, 2023",5 GW green hydrogen project wins bid for SA’s Eyre Peninsula,"Following a market sounding in late 2022, Amp Energy has emerged with the rights to develop the Cape Hardy Green Hydrogen Project and is now in a nine-month exclusivity period as part of its commercial arrangement with site owner, Iron Road.
+The project will sit on about one third of the 1,200 hectare plot on South Australia’s Eyre Peninsula controlled by ASX-listed company Iron Road, which is concurrently developing an iron export and port development project on the site.
+Amp Energy said it intends to develop and build up to 5 GW of electrolyser capacity over the next decade in the Cape Hardy precinct. It plans to deliver over five million tonnes of green ammonia per annum from the project.
+Image: Iron Road
+Amp, which is backed by private equity giant Carlyle Group, said the Cape Hardy project is part of its bigger green hydrogen play in Australia. The company said it plans to develop around 20 GW of electrolyser capacity across three precincts here, producing the equivalent of 19 million tonnes of green ammonia per annum.
+It is not entirely clear if these other precincts are part of projects Amp has already proposed – namely the $2 billion (USD 1.3 billion) Renewable Energy Hub of South Australia (REHSA). This hub, which was made public in 2021, is in fact a portfolio of integrated solar and battery assets located at three sites in South Australia. These include 636 MW at Robertstown, 336 MW at Bungama and the 388 MW Yoorndoo Ilga project, just north of Whyalla. 
+In 2021, Amp said it had already secured land and development approvals and expected the Robertstown and Bungama projects to begin staged energisation in 2023, however the trail seems to have gone cold since then. In total, this proposed portfolio would have 1.36 GW of combined capacity, and at the time Amp did flag its future plans to introduce hydrogen production.
+While the Cape Hardy announcement made no explicit reference to the  Renewable Energy Hub of South Australia (REHSA) portfolio, Amp did point to its “integrated model” in Australia, saying the company envisions being among one of Australia’s largest hydrogen developers and will do so by “owning and optimising feedstock generation assets, transmission, processing, and export.”
+Image: Iron Road
+Amp said it was drawn to the Cape Hardy project “due to its strategic geographic location and strong support from the South Australia government.” The Cape Hardy site boasts direct access to existing high voltage transmission infrastructure and a deep-water port. The South Australian government has previously pointed to Cape Hardy as a viable location for a green hydrogen hub, and the Australian federal government has previously pledged $25 million to help develop the site’s port infrastructure.
+Noting the green hydrogen buzz, the owner of 1,200 hectare greenfield site at Cape Hardy, Iron Road, hired consultancy WSP in 2022 to undertake a market sounding exercise to gauge global interest in developing a green hydrogen project there. By September, the company launched a formal Expression of Interest bid process “following on from the considerable interest expressed,” it said.
+Having emerged as the winner, Amp Energy’s cofounder and chief information officer, Paul Ezekiel, described the Cape Hardy project as “critical to our continued global growth and long-term strategy.”
+South Australian Premier Peter Malinauskas welcomed Amp Energy’s progression. “This project complements my government’s commitment to hydrogen, through the Hydrogen Jobs Plan,” Malinauskas said.
+Image: Iron Road
+The Cape Hardy project will include and leverage Amp Energy’s automated grid flexibility platform, Amp X, the company said.
+Since being founded in 2009, Amp says it has developed and built close to 3 GW of renewable assets globally, and has another 4 GW either in late-stage development or construction. The company entered Australia in 2017 and alongside its proposed South Australian portfolio, it owns two operating solar farms in New South Wales, the 119 MW Hillston solar farm and the 39 MW Molong solar farm.
+In 2022, Amp’s Indian arm announced a partnership with manufacturer Websol Energy System to produce up to 1.2 GW of monocrystalline PERC solar cells and modules. The company’s cited its Australian ambitions in the announcement, saying its entry into PV manufacturing was a “natural progression” and will help it to better control the supply chain.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-australia.com/2023/04/12/tesla-to-build-new-megapack-factory-in-china/,"ENERGY STORAGE,MANUFACTURING,MARKETS,MODULES & UPSTREAM MANUFACTURING,CHINA,UNITED STATES,WORLD",PV MAGAZINE,"APRIL 12, 2023",Tesla to build new Megapack factory in China,"From pv magazine Global
+Tesla says it plans to start building its new Shanghai factory in the third quarter of 2023, with operations to commence in the second quarter of 2024. It says that the factory will produce Megapack, Tesla’s large commercial energy storage batteries.
+Tesla’s Megapack batters are known for their ability to store more than 3 MWh of electricity per unit, for high-density, utility-scale energy storage projects. The batteries can be integrated and installed with battery packs, inverters, and temperature control systems to stabilise the grid. The battery packs are designed to match with dedicated inverters. Megapack batteries can also be updated in real time via over-the-air (OTA) software to continuously optimise them.
+Tesla says the Megapack factory will be its first major storage factory project outside of the United States. Zhuang Mudi, the deputy secretary of the Shanghai municipal government, said that the Tesla Megapack factory project will play a crucial role in promoting the development of Shanghai’s energy storage industry.
+In January 2019, Tesla started building its Shanghai gigafactory and completed it within a year. The Shanghai gigafactory supplied more than 710,000 electric vehicles in 2022. Since 2019, Tesla has continued to invest in Shanghai, partly by increasing the production capacity of the Shanghai gigafactory.
+Reuters has reported that CEO Elon Musk plans to visit China in April.
+–
+Author: Vincent Shaw
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-australia.com/2023/04/12/robotic-solution-to-address-installer-shortage-developed-by-us-company/,"BALANCE OF SYSTEMS,MANUFACTURING,TECHNOLOGY AND R&D,UTILITY SCALE PV,UNITED STATES,WORLD",BEATRIZ SANTOS,"APRIL 12, 2023",Robotic solution to address installer shortage developed by US company,"From pv magazine Global
+Industrial robotic systems manufacturer Sarcos has developed a solution to automate and streamline the construction of large-scale solar plants.
+The US-based company recently achieved the final validation of its prototype solution in the Outdoor Autonomous Manipulation of Photovoltaic Panels (O-AMPP) project, funded by the US Department of Energy Solar Energy Technologies Office. It did not disclose the exact location of the pilot installation.
+“The solar construction industry is facing unprecedented labour shortages while simultaneously facing an increase in demand for solar energy,” said Trent Mostaert, vice president of industrialisation at construction engineering company Mortenson, a partner in the O-AMPP project. “We believe the O-AMPP system can address these challenges while improving safety, productivity, and efficiency for our workers. It will also enable solar project developers to scale output and production to the levels needed to achieve the Energy Department’s 2030 and 2050 renewable energy goals.”
+The proof-of-concept robotic system consists of an autonomous working vehicle (AWV) featuring Sarcos’ Guardian XM robotic arm and an autonomous delivery vehicle (ADV). The solution uses cameras to identify where the PV panels need to be installed. The robotic arm then autonomously lifts up the panel using a vacuum system and places it approximately where it needs to be clamped to the mounting structure. “The arm then goes into a special mode where the person clamping the panel can easily move that panel however they need, in order to align it and attach it into the panels,” Sarcos explains in a video on its website.
+The company did not share details on whether the vacuum system lifting mechanism would lead to mechanical stress on the PV modules. It says that the robotic solution’s benefits include lower soft costs for projects, projection multiplication, improved construction timelines and quality, and a safer worksite that reduces the risk of lifting and fatigue-related injuries.
+The O-AMPP project started in 2021 and Sarcos expects to commercialise its solution by 2024. “Achieving this market validation and field test milestone is a mission-critical step on our path to commercializing our robotic solar field construction solution and, ultimately, enhancing safety and productivity in the solar field construction industry,” said Kiva Allgood, CEO of Sarcos.
+Array Technologies supplied the tracker system used in the pilot project. Other industry partners included equipment manufacturer JLG Industries, automotive company Pratt Miller, and Mortenson.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."

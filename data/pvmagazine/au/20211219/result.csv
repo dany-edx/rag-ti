@@ -1,0 +1,39 @@
+﻿url,tag,author,updated_date,title,contents
+https://www.pv-magazine-australia.com/2021/12/19/sunday-read-the-new-entrant-to-the-energy-sector/,"GRIDS & INTEGRATION,HYDROGEN,MARKETS,WORLD",PV MAGAZINE,"DECEMBER 19, 2021",Sunday read: The new entrant to the energy sector,"From pv magazine 12/2021
+Large volumes of low-carbon hydrogen from excess renewable energy production can help to decarbonise the economy, and hence enable countries to reach their net-zero emission goals. Net-zero scenarios put forward by the International Energy Agency and the Energy Transitions Commission show hydrogen meeting between 15% and 20% of global final energy demand in 2050, all of which needs to be low carbon. This would increase the demand for hydrogen from under 80 tonnes today to well over 1,000 tonnes by mid-century and create a gigantic opportunity for renewables, in particular solar PV.
+To what extent large-scale hydrogen will play a role in providing long-duration storage to net-zero power grids in the future is a hot topic on its own. However, green hydrogen production from small- and medium-scale electrolysers offers considerable short-term potential. The key is for it to become commercially viable quickly, in order for it to help solve grid integration challenges.
+To date, green hydrogen from electrolysers fed by renewable energy is adopted in small volumes in demonstration projects, but the technology is on a path to commercial maturity. So, what makes co-located electrolysis and renewable generation financially attractive?
+RTE, the French transmission system operator, ensures the stability of the grid by balancing supply and demand. Three grid-balancing services are currently tendered by RTE, differing in their required activation time response, duration, and occurrence of the service as shown in the table (bottom right).
+Certain electrolysers can run at part rated load factor and hence flex their demand in either direction in response to grid requirements. They produce hydrogen at a higher rate when there is an abundance of power which might otherwise be curtailed, and decrease production when renewable generation is scarce, and the market is tight. This capability allows them to participate in these tenders. Primary and secondary reserves are required every day to balance the grid frequency. The capacity market is only required during the tightest supply months of the year and ensures there is always adequate supply available to meet demand.
+As part of Sacha Lepoutre’s master’s thesis, an analysis was undertaken to assess the ability of an electrolyser, co-located with either solar or onshore wind, to provide ancillary services to the grid. The potential economic value of doing so for a pilot-scale commercial project was quantified. The scenarios modelled were solar+storage, with the remaining share of electricity supplied by the grid, as well as solar+grid electricity, guaranteed as renewable using green certificates (GO or Guarantee of Origin). Another scenario was wind+grid electricity guaranteed as renewable using green certificates (GO or Guarantee of Origin).
+The results of the analysis are presented in the graph (bottom left), plotting the IRR achieved by each project scenario against the resulting or negotiated hydrogen offtake price.
+Several conclusions can be drawn from the analysis. Most significantly, using the electrolyser to provide one or more frequency reserve services improves profitability, with a consistent uplift in project IRR, irrespective of the renewable energy it is combined with. Grid services revenue contributed up to 10% of total project revenue for comparatively little additional capital outlay. Secondly, on the French market and for this specific project, feeding the electrolyser with wind power may outperform solar. And thirdly, higher internal rates of return (IRR) are observed for electrolysers that are only being reserved and not activated on the secondary reserve.
+In other words, while not the primary purpose of an electrolyser, the ability to provide ancillary services may create additional revenue streams and improve project economics of a PV or wind project significantly. This could lead to small and medium scale electrolysers becoming a significant new entrant to the ancillary services market on the supply side. The potential knock-on impact on battery storage business models and ancillary services price pressures warrants further investigation.
+However, key hurdles to bankability remain. Although several innovative projects considering frequency services have emerged recently, and manufacturers mention the feasibility of such projects, practical feedback from real demonstrator projects is currently missing. Moreover, to date, the lack of regulatory definition for green or low-carbon hydrogen adds significant uncertainty to the revenue streams.
+Curtailment of renewables is already a problem, and this problem is going to exacerbate rapidly without a large-scale and price-sensitive dispatchable demand that can be ramped up when renewable power is available in excess. In the long term, electrolysers may well provide a proportion of this dispatchable demand.
+
+(FCR)
+
+Symmetric
+
+Revenues (€/MW/h)
+
+(aFRR)
+
+Antisymmetric (Up)
+
+Revenues (€/MWh)
+
+1h tenders
+Antisymmetric (Up)
+
+No activation
+Revenues (€/MW/h)
+
+Revenues (€/MW/year)
+
+Electrolyzers: aFRR Up
+About the authors
+Sacha Lepoutre undertook an MSc in the Sustainable Energy Futures program at Imperial College London. He works in emerging markets as part of a broader transition to a more sustainable future. He is currently the hydrogen lead for Neoen, an independent renewables producer, in France.
+Nicolas Chouleur is a partner at Everoze, a technical and commercial energy consultancy specialising in renewables, energy storage and flexibility. He has been working on designing, engineering and operating all kinds of solar PV systems throughout the world since 2006, from residential PV arrays to large, utility-scale power plants.
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."

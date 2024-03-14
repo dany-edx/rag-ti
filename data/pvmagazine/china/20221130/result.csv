@@ -1,0 +1,52 @@
+﻿url,tag,author,updated_date,title,contents
+https://www.pv-magazine-china.com/2022/11/30/%e8%8f%b2%e5%be%8b%e5%ae%be%e5%b0%86%e5%8f%af%e5%86%8d%e7%94%9f%e8%83%bd%e6%ba%90%e5%87%80%e8%ae%a1%e9%87%8f%e8%a7%84%e6%a8%a1%e9%99%90%e5%88%b6%e6%8f%90%e9%ab%98%e8%87%b31-mw/,"住宅光伏,商业和工业光伏,市场,市场与政策,菲律宾",EMILIANO BELLINI,"十一月 30, 2022",菲律宾将可再生能源净计量规模限制提高至1 MW,"菲律宾能源监管委员会（ERC）批准了容量不超过1 MW的分布式能源资源（DER）的新规，并将在国家官方公报公布后15日内生效。
+新规为分布式可再生能源系统的业主开辟了向电网注入剩余电力并最多按30%获得报酬的可能性。
+ERC说：“DER规则包括指导方针、互连标准、合格证书（COC）要求、定价方法、管理DER所产电力的销售和运营的商业方案，以及补贴支付等等。”
+菲律宾自2008年以来只允许对规模低于100 kW的可再生能源系统进行净计量，然而计划未能催生显著的增长。菲律宾现有的大部分屋顶光伏发电容量实际上是通过现已过期的 长期保护性电价上网电价体系部署。
+菲律宾计划到2030年安装15 GW的清洁能源，国际可再生能源机构最近的统计数据显示，截至2021年底该国光伏装机容量为1.08 GW。
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-china.com/2022/11/30/%e5%9c%a8%e5%8d%97%e6%ac%a7%e6%b5%ae%e5%bc%8f%e5%a4%aa%e9%98%b3%e8%83%bd%e6%af%94%e5%9c%b0%e9%9d%a2%e5%85%89%e4%bc%8f%e5%8f%91%e7%94%b5%e6%9b%b4%e5%85%b7%e6%88%90%e6%9c%ac%e7%ab%9e%e4%ba%89%e6%80%a7/,"公用事业规模光伏,技术,技术与研发,欧洲",BEATRIZ SANTOS,"十一月 30, 2022",在南欧浮式太阳能比地面光伏发电更具成本竞争性,"来自意大利和西班牙的研究人员估算了欧洲合适水体中浮式光伏（FPV）的发电量和成本潜力，并与最佳倾斜度的陆上光伏（LPV）进行了比较。
+研究员Leonardo Micheli告诉《光伏》杂志：“我们还证明，在地中海国家FPV可以在经济上与传统LPV竞争，因为这些地方太阳位置更高，温度也更高。然而，如果资本成本降低12%，FPV在所有模拟场景和国家中都具有成本竞争力。”
+科学家们使用全球水库和大坝数据库（GRanD）中欧洲可用的水面数据来估计欧洲潜在的FPV装机容量，并只考虑了用于水电、供水、灌溉和防洪的水库。他们使用PVWatts直流电力模型模拟了单面组件的发电量，其数据来自CAMS辐照服务的每小时辐照度。
+对于FPV应用，该模型考虑了10度和20度的倾斜角以及0.06的反照率的场景，LPV被假定为采用最佳倾斜角，反照率0.25。两次模拟都使用了天合光能效率为21.4%的组件，效率为96%的逆变器，直流至交流损耗取14%，所有组件均朝南，光伏系统寿命被设定为25年。科学家们从IRENA可再生能源成本数据库中获取数据，来计算欧洲不同地点的资本支出和年度运营和维护支出（omex）。
+该研究考察了FPV和LPV在四种热量场景下的性能，结果显示，FPV系统可达到640至1688kWh/kW/年的发电量，对应的容量系数为7.3%至19.3%。
+研究人员说：“出乎意料的是，较高发电量出现在最南端的国家，那里的太阳能潜力更高，因为较低的倾斜角造成的角度和反射损失有限。”
+最差表现出现在斯堪的纳维亚半岛和瑞士、奥地利和意大利的高山地区，在最乐观的热交换场景下，FPV的电气性能最高，比LPV多发2%的电。
+研究人员说：“在这种场景下的几个国家，20度倾斜的FPV的发电量也比有最佳倾斜度的LPV高，然而在其他配置和场景下，FPV发电量通常低于LPV，特别是在10度倾斜时。结果突出表明，倾斜角度对能量转换的影响很大。”
+该研究估计，在FPV装置中倾斜角每增加一度的价值在€2.50 ($2.62)/kW和€7.50/kW之间。
+鉴于发电量的差异，FPV在平准化能源成本（LCOE）方面的竞争力取决于资本支出和omex的考虑。结果显示，总体上如果除去支架和安装成本，LPV的LCOE在大多数欧洲国家的所有场景中都具有竞争力。如果也不计并网成本——例如通过与水电混合，FPV在所有国家的所有建模场景中都具有成本竞争力。
+研究小组在最近发表在《Solar Energy》上的《欧洲浮式光伏技术经济潜力和前景》中分享了研究结果，小组成员包括来自西班牙哈恩大学和意大利卡塔尼亚大学的研究人员。
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-china.com/2022/11/30/%e6%b3%a2%e5%85%b0%e6%8f%90%e9%ab%98%e4%bd%8f%e5%ae%85%e5%a4%aa%e9%98%b3%e8%83%bd%e5%92%8c%e5%82%a8%e8%83%bd%e9%a1%b9%e7%9b%ae%e9%80%80%e7%a8%8e%e7%8e%87/,"住宅光伏,市场,市场与政策,政策,波兰",BEATRIZ SANTOS,"十一月 30, 2022",波兰提高住宅太阳能和储能项目退税率,"波兰政府透露，将提高Mój Prąd（自用电力）退税计划下的住宅光伏和储能装置的补贴水平。
+按照该计划的网站信息，从12月15日起，太阳能补贴将从4000兹罗提增至6000兹罗提，储能退税将增加一倍多，从7500兹罗提增至16000兹罗提。该计划面向2 kW至10 kW的住宅屋顶光伏项目和2 kWh起的储能装置开放，
+变化将覆盖4月推出的第四版退税计划的受众。政府还将当前版本的MójPrąd的申请征集时间从2022年12月底延长到2023年3月底。
+准消费者可根据一份规定将微型装置所发电力注入波兰电网的协议提交申请。计划从2019年启动以来已向411,494个光伏项目分配了超过17亿兹罗提。
+计划资金总额为53.4亿兹罗提，将一直接受申请直到资金用尽。在2021年至2023年期间，该计划的第三和第四版已经分配了多达8.55亿兹罗提。随着俄罗斯持续入侵乌克兰，提高退税率旨在加强波兰的能源安全。
+Moskwa在推特上说：“发展可再生能源是应对战后能源价格上涨的一剂良药。”
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-china.com/2022/11/30/%e8%8d%b7%e5%85%b0%e5%9c%a8%e6%96%b0%e4%b8%80%e8%bd%aesde%e4%b8%ad%e9%a2%84%e9%80%89%e5%87%ba2-2-gw%e5%85%89%e4%bc%8f%e9%a1%b9%e7%9b%ae/,"公用事业规模光伏,商业和工业光伏,市场,市场与政策,荷兰",EMILIANO BELLINI,"十一月 30, 2022",荷兰在新一轮SDE++中预选出2.2 GW光伏项目,"荷兰经济事务部透露，在2022年一轮针对大型太阳能和可再生能源项目的SDE++（Stimulering Duurzame Energieproductie）计划中，已预选出2.26 GW光伏项目，截至目前，太阳能占到分配容量的90%左右。
+管理SDE++计划的国有机构Rijksdienstvoor Ondernemend Nederland（RVO）已接受2052项可再生能源项目提案，总容量为2344 MW。这些项目中有1944个总容量为1275 MW的屋顶光伏装置，77个总计955 MW的地面安装太阳能项目，另有20个总计20 MW的浮动太阳能阵列项目，此外还有总计75 MW的风电场提案。
+RVO说：“在这一轮中开发商可以申请最多37.5 TWh的太阳能光伏和风能的陆上可再生能源发电容量，但这个上限尚未达到。”
+2022年SDE++计划预算为130亿欧元（135亿美元），是其迄今为止的最高金额，还首次接受了与可再生能源相关的绿色氢提案，以及基于混合玻璃炉的工业电气化项目。此外还有三个建造42 MW氢电解器的提案。
+在最新一轮计划中，荷兰政府机构选择了3,426个光伏项目，总容量为3,535 MW。根据荷兰国家区域电力和天然气网络运营商协会（Netbeheer Nederland）新闻的一份报告，到2050年时荷兰的太阳能总装机容量可以达到38 GW至125 GW。截至12月底，该国累计太阳能装机容量会达到14.3 GW。
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-china.com/2022/11/30/%e6%97%a5%e6%9c%ac%e4%bc%81%e4%b8%9a%e8%81%94%e7%9b%9f%e6%8e%a8%e5%87%ba%e9%a6%96%e4%b8%aa%e4%ba%8c%e6%ac%a1%e5%af%bf%e5%91%bd%e5%a4%aa%e9%98%b3%e8%83%bd%e6%8b%85%e4%bf%9d%e8%ae%a1%e5%88%92/,"战略联盟,技术,技术与研发,热点,组件与上游制造业,日本",BEATRIZ SANTOS,"十一月 30, 2022",日本企业联盟推出首个二次寿命太阳能担保计划,"日本公司Marubeni和Sompo Japan已签署一份谅解备忘录，对废旧太阳能电池板进行适当的再利用和回收。保险公司Sompo为二手太阳能电池板提供缺陷担保，然后综合贸易公司Marubeni将于2023年开始销售。
+合作将建立一个体系：首先由Marubeni检查废旧光伏组件的性能和再利用可行性，并将详情放到一个信息管理平台上，Marubeni将收集从处置时开始的面板历史信息，按公司声明所述，将使用区块链技术验证这些信息的可追溯性和真实性。
+如果Marubeni认为旧组件质量足以重新使用，则Sompo将提供二次使用担保，即合作缺陷保证。但两家公司没有透露这种担保的期限。
+Marubeni计划在2023年开始销售二次寿命面板，并在一份声明中说：“这标志着在日本首次通过一个平台为二手太阳能电池板提供缺陷担保。”
+没有通过可重复使用检查的电池板将被回收，并将通过子公司Sompo Risk Management进行收购和回收。回收过程将与Marubeni的信息管理平台合作进行。声明说：“原材料通过该计划进行再利用和回收，有望得到循环利用，减少送往垃圾填埋场的工业废物数量。”
+于2021年6月建立的该信息管理平台是日本环境部资源回收计划的一部分。
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."
+https://www.pv-magazine-china.com/2022/11/30/%e6%be%b3%e5%a4%a7%e5%88%a9%e4%ba%9a%e5%85%ac%e5%8f%b8%e6%8b%9f%e5%bb%ba4-5-gwh%e6%8a%bd%e6%b0%b4%e8%93%84%e8%83%bd/,"储能,公用事业规模储能,技术与研发,澳大利亚",PV MAGAZINE,"十一月 30, 2022",澳大利亚公司拟建4.5 GWh抽水蓄能,"澳大利亚可再生能源开发商Sunshine Hydro和Energy Estate宣布组建一家新的合资企业，专注于在澳大利亚维多利亚州开发“数个”大型抽水蓄能项目，并计划整合绿色氢生产和新建可再生能源发电产能。
+这两家公司在今年早些时候宣布了将在昆士兰州开发可再生能源“超级混合”项目的计划，并确认将研究包括流动电池、太阳能热能、压缩空气和储氢等其他长期储能技术。
+Sunshine Hydro董事长Michael Myer说，成立新企业是为了回应维州燃煤电厂加速关闭，以及州政府对新型清洁能源发电来源的支持，作为其到2035年达到95%可再生能源目标的一部分。
+他说：“我们的目标是取代Latrobe Valley的燃煤发电站关停后将丧失的可调度容量，并支持维州绿色氢产业的发展。如果说到过去几个月给我们的教训，便是我们需要更多长期储能，不仅是为了保持供电，还为了让能源价格保持低位。随着我们迅速实现电气化并远离化石燃料，我们都需要明白，建立新的大规模深度储能至关重要，无论对消费者还是产业而言。”
+新企业以这两家公司在昆州的现有合作关系为基础。他们正联合开发一个“超级混合”项目，其中包括1.8 GW风力发电和储水18小时的600 MW抽水蓄能。正在昆州中部开发的Djandori gung-i项目还将包括300 MW氢电解器、50 MW液化和50 MW氢燃料电池。两家公司表示，已获得昆州项目所需土地，预计将在2025年做出最终投资决定，能源生产有望在2028年启动。
+作者：DAVID CARROLL
+来源：www.pv-magazine.com
+This content is protected by copyright and may not be reused. If you want to cooperate with us and would like to reuse some of our content, please contact: editors@pv-magazine.com."

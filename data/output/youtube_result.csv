@@ -1,0 +1,52 @@
+,domain,url,summary,thumbnail_url
+0,PV,https://www.youtube.com/watch?v=7yZWQ0Yhvg4,"0:00:0.1 - 0:04:58.2:
+🌞Joe Oria interviews Harsh Galia, senior product manager at Q Cells, about the Q Cells 2024 solar panel lineup. They discuss the current G10 offering, improvements made in the new KRON panel, and the shift from p-type perk technology to end type quantum Neo technology.
+
+0:20:0.1 - 0:24:59:
+🔌The AC module allows for local conversion of DC power to AC power, reducing the impact of shading on overall system performance. The integration of the microinverter onto the panel saves time and potentially cost for installers. Q CELLS aims to provide a seamless user experience with their own microinverter, panel, and monitoring portal.
+
+0:25:1.4 - 0:25:15.0:
+🌞The Excel g1s 590 595 watt commercial and Industrial solar module is a workhorse module that offers 21% bifacial gain on the rear side. It is a Duo module with the top and bottom halves wired separately. The majority of the manufacturing is done in the USA.",https://i.ytimg.com/vi/7yZWQ0Yhvg4/hq720.jpg
+0,PV,https://www.youtube.com/watch?v=eekZ7F1ClVQ,"0:00:0.1 - 0:04:60.0:
+🔋Adding flexibility to customers is what sets AP Systems' battery solution apart from other offerings in the market.
+
+0:10:1.4 - 0:10:27.4:
+🔋The AP storage solution from AP systems allows homeowners to manage their solar and battery systems through the EMA app. The system offers three modes: backup mode, self-consumption mode, and time of use mode. The app provides valuable information and allows users to monitor and control their system.",https://i.ytimg.com/vi/eekZ7F1ClVQ/hq720.jpg
+0,ESS,https://www.youtube.com/watch?v=uQ77PuIAqX4,"0:00:3.1 - 0:04:58.6:
+🔒The Cyber Security Skills Academy was launched by the European Commission to address the ongoing skills shortage in the cyber security sector. It aims to keep the existing workforce motivated, attract more professionals to the field, and promote diversity, including more women, in cyber security.
+
+0:15:0.7 - 0:19:59.9:
+👩‍💻The speaker discusses the initiatives taken by the European Union to encourage women to start a career in the tech industry. This includes acknowledging the issue, advocating for women in cybersecurity, and providing training and education opportunities through the Women for Cyber Academy.
+
+0:25:3.5 - 0:29:48.5:
+🚀The major obstacles that prevent women from starting careers in Tech are stereotypes, limited representation of role models, and the educational pipeline issue. Women for Cyber has achieved a 3% increase in female representation in cybersecurity, but there is still work to be done to achieve gender neutrality.",https://i.ytimg.com/vi/uQ77PuIAqX4/hqdefault.jpg?sqp=-oaymwEXCJADEOABSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBeNXFVRS67R7WVwg8Me2k_nCj-Rw
+0,ESS,https://www.youtube.com/watch?v=BALqhBVSN-0,"0:10:2.6 - 0:14:58.0:
+📊Enterprises are discovering the value of data and using it to create new revenue streams and improve their services. The European Union is pushing for fair and secure data strategies to minimize monopolies. There are various types of databases that facilitate data collection and management, and these databases intersect with emerging technologies. The interpretation and decision-making process in data analysis is shifting, and responsible use of these tools is important.
+
+0:15:0.7 - 0:19:58.3:
+📊The skills needed for understanding and working with data include research skills, data literacy, interpersonal skills for negotiating data choices, and understanding the purpose and scope of data tools. To upskill and reskill the workforce, initiatives like team-based research projects and training in data diversity and literacy can be implemented.
+
+0:24:21.7:
+📚Investing in training programs for the general public to empower them with data skills and awareness. Mention of decentralized architectures for personal data control. Conclusion emphasizes the need to challenge stereotypes and be more aware and empowered with our data.",https://i.ytimg.com/vi/BALqhBVSN-0/hqdefault.jpg?sqp=-oaymwEXCJADEOABSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLC62g7-FEeVC2m54-1HieiLA2Qemg
+0,VPP,https://www.youtube.com/watch?v=F8GfbM9Oe6g,"0:00:0.4 - 0:04:59.2:
+🔋This video compares the Tesla Powerwall 3 and the Solar Edge home system in terms of their DC architecture, inverter efficiency, backup capability, warranties, monitoring features, and virtual power plant networks. The Powerwall 3 stands out with its higher inverter efficiency and battery backup capability, as well as its 10-year labor reimbursement warranty. On the other hand, the Solar Edge system offers module-level monitoring, which allows for easier troubleshooting. Both systems have virtual power plant networks available.
+
+[0:10:0.6 - 0:14:59.9, 0:15:2.7 - 0:17:3.4]:
+🌞The document discusses the pricing and features of the Powerwall 3 and SolarEdge systems for solar energy storage. It compares the storage capacity, energy generation, and cost savings of the two systems. The document also mentions other available options for solar and storage solutions. Overall, it emphasizes the importance of making a decision to switch to clean renewable energy.",https://i.ytimg.com/vi/F8GfbM9Oe6g/hq720.jpg
+0,Software,https://www.youtube.com/watch?v=kAt1UL9nVhs,"0:10:0.1 - 0:14:59:
+🎮The podcast discusses the parallelism and efficiency of using CUDA for GPU processing. They explore various examples, such as adding arrays, comparing strings, calculating Fibonacci sequence, and adding blur to an image, to determine if they are parallelizable. They also mention the CUDA FFT library for efficient Fourier transforms.
+
+0:15:1.6 - 0:19:58.6:
+🎮The speaker discusses various problems and algorithms that can be parallelized using CUDA. They mention problems like summing up numbers in a list, multiplying matrices, and the Game of Life. They also talk about the principles of determining if a problem is a good fit for CUDA and the use of libraries and GPU cores.
+
+0:20:0.7 - 0:29:57.8:
+🎮The discussion revolves around the difference between using a consumer card or a professional card for GPU computing. The bottleneck in GPU computing is often the movement of data in and out of memory. Efficient utilization of GPUs and understanding their capabilities is important for machine learning engineers. The conversation also touches on the use of tensor cores in GPUs and the scarcity of GPUs in the market.
+
+0:35:3.2 - 0:39:59:
+🔥The supply chain for GPUs has been disrupted due to various factors such as the end of a long-term supplier relationship, drought affecting new suppliers, and supply chain bottlenecks. The demand for GPUs has remained high, leading to shortages and price increases. Additionally, the rise of AI models has further increased demand for GPUs. Even major cloud players like Google are struggling to find GPUs. The chip shortage has also contributed to the supply chain challenges.
+
+0:45:1.6 - 0:49:10:
+🍺The optimal strategy for the beer game is to use the base stock policy, which involves ordering an amount of beer to bring the inventory position to a fixed value. Reinforcement learning with a deep Q Network has been used to train AI models to play the game and learn the optimal policy. However, caution should be exercised when putting AI in charge of supply chains, as unintended consequences can arise.
+
+0:49:10.8:
+🎧The back order for fidget spinners started to come in, but the hype was short-lived and the shops ended up giving them away for free. The speaker also shared some interesting insights and experiences, such as bonding over state machines and discovering that one chicken is vegetarian. They also made an appeal to Microsoft to bring back their favorite keyboard. The podcast episode concludes with a request to like and share the podcast.",https://i.ytimg.com/vi/kAt1UL9nVhs/hq720.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGCUgHCh_MA8=&rs=AOn4CLAZF9IZab06MDtHhl3eAInuYWtVqg
