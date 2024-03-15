@@ -44,8 +44,6 @@ class global_obj(object):
     chrome_options.add_experimental_option("detach", True)
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
 
-# nest_asyncio.apply()
-
 class Decide_to_search_external_web(BaseModel):
     """
         Verifying if the response to the question is accurate, and deciding whether to conduct an external search.
@@ -186,6 +184,7 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
+        
         else:
             if self.url != url:
                 text_list = []

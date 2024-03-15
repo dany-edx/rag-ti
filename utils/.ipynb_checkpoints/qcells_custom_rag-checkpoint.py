@@ -37,8 +37,6 @@ embedding = AzureOpenAIEmbedding(
         azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
      api_version="2023-07-01-preview")
 
-# service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
-
 def pptx_load_data(file):
     bytes_data = file.getvalue()
     byte_io = io.BytesIO(bytes_data)
@@ -106,7 +104,6 @@ class create_db_chat(BaseToolSpec):
         self.llm = llm
         self.embedding = embedding
         self.service_context = service_context
-        # set_global_service_context(service_context)        
         self.splitter = SentenceSplitter(chunk_size=512,chunk_overlap=50)
         self.splitter2 = SentenceSplitter(chunk_size=1024,chunk_overlap=100)
         self.splitter_code = CodeSplitter(language="python", chunk_lines=40, chunk_lines_overlap=15, max_chars=1500)        
@@ -114,12 +111,12 @@ class create_db_chat(BaseToolSpec):
         self.query_engine_tools = []
         self.summary = []
 
-        flat_list = sum(_docs, [])
-        if len(flat_list)>1:
-            self.index_all = GPTVectorStoreIndex.from_documents(flat_list, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
-            self.queryengine_all = self.index_all.as_query_engine()
-            # self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine_all, metadata=ToolMetadata(name="document_all"
-            #                                                                                              , description= "Please answer questions about the content of the this is merged all documents")))
+        # flat_list = sum(_docs, [])
+        # if len(flat_list)>1:
+        #     self.index_all = GPTVectorStoreIndex.from_documents(flat_list, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
+        #     self.queryengine_all = self.index_all.as_query_engine()
+        #     self.queryall_engine_tools.append(QueryEngineTool(query_engine= self.queryengine_all, metadata=ToolMetadata(name="document_all"
+        #                                                                                                  , description= "Please answer questions about the content of the this is merged all documents")))
     
         for idx, doc in enumerate(_docs):
             idx = str(idx)

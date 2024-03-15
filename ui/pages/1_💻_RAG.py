@@ -58,9 +58,7 @@ def set_llm():
             temperature = 0,
             api_key="c11ed4df2d35412b89a7b51a631bf0e4",
             azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
-            api_version="2024-02-15-preview",
-        )
-
+            api_version="2024-02-15-preview")
 def set_rag():
     return AzureOpenAI(
             model="gpt-35-turbo",
@@ -68,9 +66,7 @@ def set_rag():
             temperature = 0,
             api_key="c11ed4df2d35412b89a7b51a631bf0e4",
             azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
-            api_version="2024-02-15-preview",
-        )
-    
+            api_version="2024-02-15-preview")
 def set_llm4():
     return AzureOpenAI(
             model="gpt-4",
@@ -78,8 +74,7 @@ def set_llm4():
             temperature = 0,
             api_key="2b6d6cbbc0ae4276aad07db896f63bfd",
             azure_endpoint="https://rag-openai-qcells-norway.openai.azure.com/",
-            api_version="2024-02-15-preview",
-        )
+            api_version="2024-02-15-preview")
 def set_embedding():
     return AzureOpenAIEmbedding(
         model="text-embedding-ada-002",
@@ -87,7 +82,7 @@ def set_embedding():
         api_key="c11ed4df2d35412b89a7b51a631bf0e4",
         azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
      api_version="2023-07-01-preview")
-
+    
 def get_answer_yn(llm, query_str, text_chunks):
     synthesizer = get_response_synthesizer(llm = llm, response_mode="refine", output_cls = Decide_to_search_external_web)
     result_response = synthesizer.get_response(query_str = query_str, text_chunks=[text_chunks], verbose = True)      
@@ -309,109 +304,112 @@ if st.session_state.chosen_id == 'None':
     st.session_state.chosen_id = 'ChatGPT 3.5'
     
 if st.session_state.chosen_id == "ChatGPT 3.5":
-    st.session_state.chat_engine = st.session_state.llm
-    st.session_state.chatgpt_mode = 'ChatGPT 3.5'
     st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT 3.5"], key = 'reset1')
-    for message in st.session_state.messages1: # Display the prior chat messages
-        with st.chat_message(message["role"]):
-            msg = message["content"]
-            chat_box(msg)
-    
-    if st.session_state.chatgpt_mode == 'ChatGPT 3.5': 
-        if st.session_state.messages1[-1]["role"] == "user":
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    prompt_ = convert_message(st.session_state.messages1)
-                    response = st.session_state.chat_engine.chat(prompt_) #결과                                            
-                    chat_box(response.message.content)
-                    message = {"role": "assistant", "content": response.message.content} #저장
-                    st.session_state.messages1.append(message) # Add response to message history       
-                answer_eval = get_answer_yn(st.session_state.llm, prompt, response.message.content)
-                res = None
-                if answer_eval.Succeed_answer == False:     
-                    if answer_eval.Decide_web_search == True:
-                        if answer_eval.Reason == True:
-                            with st.spinner("Google + Bing search"):
-                                try:
-                                    res = st.session_state.webrag.chat(answer_eval.Searchable_query)
-                                    res = res.response
-                                except Exception as e:
-                                    chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
-                                    res = 'retry! ' + str(e)
-                                    
-                                # if len(res.sources[0].content) > 0:
-                                #     sources = eval(res.sources[0].content)            
-                                #     for source in sources:
-                                #         st.sidebar.write("check out this [link](%s)" % source)            
-            if res:
+    with st.container(height=700):
+        st.session_state.chat_engine = st.session_state.llm
+        st.session_state.chatgpt_mode = 'ChatGPT 3.5'
+        for message in st.session_state.messages1: # Display the prior chat messages
+            with st.chat_message(message["role"]):
+                msg = message["content"]
+                chat_box(msg)
+        
+        if st.session_state.chatgpt_mode == 'ChatGPT 3.5': 
+            if st.session_state.messages1[-1]["role"] == "user":
                 with st.chat_message("assistant"):
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages1.append(message) # Add response to message history           
-                    chat_box(res)         
+                    with st.spinner("Thinking..."):
+                        prompt_ = convert_message(st.session_state.messages1)
+                        response = st.session_state.chat_engine.chat(prompt_) #결과                                            
+                        chat_box(response.message.content)
+                        message = {"role": "assistant", "content": response.message.content} #저장
+                        st.session_state.messages1.append(message) # Add response to message history       
+                    answer_eval = get_answer_yn(st.session_state.llm, prompt, response.message.content)
+                    res = None
+                    if answer_eval.Succeed_answer == False:     
+                        if answer_eval.Decide_web_search == True:
+                            if answer_eval.Reason == True:
+                                with st.spinner("Google + Bing search"):
+                                    try:
+                                        res = st.session_state.webrag.chat(answer_eval.Searchable_query)
+                                        res = res.response
+                                    except Exception as e:
+                                        chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
+                                        res = 'retry! ' + str(e)
+                                        
+                                    # if len(res.sources[0].content) > 0:
+                                    #     sources = eval(res.sources[0].content)            
+                                    #     for source in sources:
+                                    #         st.sidebar.write("check out this [link](%s)" % source)            
+                if res:
+                    with st.chat_message("assistant"):
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages1.append(message) # Add response to message history           
+                        chat_box(res)         
                     
 if st.session_state.chosen_id == "ChatGPT 4":
-    st.session_state.chat_engine = st.session_state.llm4
-    st.session_state.chatgpt_mode = 'ChatGPT 4'
     st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT 4"], key = 'reset2')
-    for message in st.session_state.messages2: # Display the prior chat messages
-        with st.chat_message(message["role"]):
-            msg = message["content"]
-            chat_box(msg)
-    if st.session_state.chatgpt_mode == 'ChatGPT 4': 
-        if st.session_state.messages2[-1]["role"] == "user":
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    prompt_ = convert_message(st.session_state.messages2)
-                    response = st.session_state.chat_engine.chat(prompt_) #결과                    
-                    chat_box(response.message.content )                        
-                    message = {"role": "assistant", "content": response.message.content} #저장
-                    st.session_state.messages2.append(message) # Add response to message history       
-                answer_eval = get_answer_yn(st.session_state.llm,  prompt, response.message.content)
-                res = None
-                if answer_eval.Succeed_answer == False:     
-                    if answer_eval.Decide_web_search == True:
-                        if answer_eval.Reason == True:
-                            with st.spinner("Google + Bing search"):
-                                try:
-                                    res = st.session_state.webrag.chat(answer_eval.Searchable_query)
-                                    res = res.response
-                                except Exception as e:
-                                    chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
-                                    res = 'retry! ' + str(e)
-            if res:
+    with st.container(height=700):
+        st.session_state.chat_engine = st.session_state.llm4
+        st.session_state.chatgpt_mode = 'ChatGPT 4'
+        for message in st.session_state.messages2: # Display the prior chat messages
+            with st.chat_message(message["role"]):
+                msg = message["content"]
+                chat_box(msg)
+        if st.session_state.chatgpt_mode == 'ChatGPT 4': 
+            if st.session_state.messages2[-1]["role"] == "user":
                 with st.chat_message("assistant"):
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages1.append(message) # Add response to message history           
-                    chat_box(res)         
+                    with st.spinner("Thinking..."):
+                        prompt_ = convert_message(st.session_state.messages2)
+                        response = st.session_state.chat_engine.chat(prompt_) #결과                    
+                        chat_box(response.message.content )                        
+                        message = {"role": "assistant", "content": response.message.content} #저장
+                        st.session_state.messages2.append(message) # Add response to message history       
+                    answer_eval = get_answer_yn(st.session_state.llm,  prompt, response.message.content)
+                    res = None
+                    if answer_eval.Succeed_answer == False:     
+                        if answer_eval.Decide_web_search == True:
+                            if answer_eval.Reason == True:
+                                with st.spinner("Google + Bing search"):
+                                    try:
+                                        res = st.session_state.webrag.chat(answer_eval.Searchable_query)
+                                        res = res.response
+                                    except Exception as e:
+                                        chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
+                                        res = 'retry! ' + str(e)
+                if res:
+                    with st.chat_message("assistant"):
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages1.append(message) # Add response to message history           
+                        chat_box(res)         
                             
 if st.session_state.chosen_id == "ChatGPT+RAG":  
-    st.session_state.chat_engine = st.session_state.rag
-    st.session_state.chatgpt_mode = 'ChatGPT+RAG'
     st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT+RAG"], key = 'reset3')   
-    for message in st.session_state.messages3: # Display the prior chat messages
-        with st.chat_message(message["role"]):
-            msg = message["content"]
-            chat_box(msg)
-    if st.session_state.chatgpt_mode == 'ChatGPT+RAG': 
-        if st.session_state.messages3[-1]["role"] == "user":
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    try:
-                        response = st.session_state.chat_engine.chat(prompt)
-                        res = response.response
-                    except Exception as e:
-                        st.session_state.chat_engine.reset()
-                        res = str(e)
-                    chat_box(res)
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages3.append(message) # Add response to message history        
-
+    with st.container(height=700):
+        st.session_state.chat_engine = st.session_state.rag
+        st.session_state.chatgpt_mode = 'ChatGPT+RAG'
+        for message in st.session_state.messages3: # Display the prior chat messages
+            with st.chat_message(message["role"]):
+                msg = message["content"]
+                chat_box(msg)
+        if st.session_state.chatgpt_mode == 'ChatGPT+RAG': 
+            if st.session_state.messages3[-1]["role"] == "user":
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        try:
+                            response = st.session_state.chat_engine.chat(prompt)
+                            res = response.response
+                        except Exception as e:
+                            st.session_state.chat_engine.reset()
+                            res = str(e)
+                        chat_box(res)
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages3.append(message) # Add response to message history        
+    
 
 
 col1_chat, col2_chat = st.columns([3, 2])
 if st.session_state.chosen_id == "ChatGPT+CustomRAG":
     st.sidebar.button('Reset Chat', on_click=reset_conversation,args=['ChatGPT+CustomRAG'], key = 'reset4')    
-    with col1_chat.container(height=600):
+    with col1_chat.container(height=700):
         st.session_state.chatgpt_mode = 'ChatGPT+CustomRAG'    
         for message in st.session_state.messages4: # Display the prior chat messages
             with st.chat_message(message["role"]):
@@ -442,7 +440,7 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
             except Exception as e:
                 st.warning('Insert Materials' + str(e), icon="⚠️")
                 pass
-    with col2_chat.container(height=600):
+    with col2_chat.container(height=700):
         if 'pdf' in st.session_state.display_datasource:
             pdf_viewer(input=st.session_state.display_datasource['pdf'], width=550)        
         if 'youtube' in st.session_state.display_datasource:            
