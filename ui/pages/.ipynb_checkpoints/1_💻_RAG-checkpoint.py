@@ -404,8 +404,6 @@ if st.session_state.chosen_id == "ChatGPT+RAG":
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages3.append(message) # Add response to message history        
     
-
-
 col1_chat, col2_chat = st.columns([3, 2])
 if st.session_state.chosen_id == "ChatGPT+CustomRAG":
     st.sidebar.button('Reset Chat', on_click=reset_conversation,args=['ChatGPT+CustomRAG'], key = 'reset4')    
