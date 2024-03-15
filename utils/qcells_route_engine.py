@@ -365,7 +365,6 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         url = 'https://patents.google.com/?q=({})'.format(query.replace(' ','+'))
         driver = webdriver.Chrome( options=global_obj.chrome_options)
         driver.delete_all_cookies()
-        print(url)
         driver.get(url) 
         time.sleep(3)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -481,7 +480,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "scholar_paper_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search", "document_analyzer"]
+    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search", "document_analyzer"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context

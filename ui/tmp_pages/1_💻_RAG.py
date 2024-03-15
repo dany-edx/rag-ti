@@ -41,9 +41,10 @@ import base64
 import os
 from pptx import Presentation
 import pdfkit
+from streamlit_extras.app_logo import add_logo
 
 nest_asyncio.apply()
-st.set_page_config(page_title="RAG",  layout="wide",  page_icon="⛅")
+st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 
 @st.cache_resource
 def lanch_px_app():
@@ -141,6 +142,11 @@ if "chat_engine" not in st.session_state.keys():
     st.session_state.prompts2 = []
     st.session_state.prompts3 = []
     st.session_state.prompts4 = []
+        
+# st.sidebar.write('''<img width="210" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg" class="attachment-full size-full wp-image-653" alt="Qcells">''',unsafe_allow_html=True,)
+
+# add_logo("https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg")
+
 
 def make_data_instance(_docs):
     st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]    
@@ -302,10 +308,11 @@ def chat_box(text):
 
 if st.session_state.chosen_id == 'None':
     st.session_state.chosen_id = 'ChatGPT 3.5'
-    
+
+st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT 3.5"], key = 'reset1')
+col1_chat1, col2_chat1 = st.columns([4, 2])
 if st.session_state.chosen_id == "ChatGPT 3.5":
-    st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT 3.5"], key = 'reset1')
-    with st.container(height=700):
+    with col1_chat1.container(height=700):
         st.session_state.chat_engine = st.session_state.llm
         st.session_state.chatgpt_mode = 'ChatGPT 3.5'
         for message in st.session_state.messages1: # Display the prior chat messages
@@ -344,6 +351,13 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
+    with col2_chat1.container(height=700):    
+        
+        url = 'https://finance.yahoo.com/video/wells-fargo-downgrades-tesla-stock-144556411.html'
+        st.write('''<img width="300" height="200" src="https://img.youtube.com/vi/-LzmgOvzWCw/hqdefault.jpg"><br>''',unsafe_allow_html=True,)
+        st.write('''<img width="300" height="200" src="https://img.youtube.com/vi/-LzmgOvzWCw/hqdefault.jpg"><br>''',unsafe_allow_html=True,)
+        st.write('''<img width="300" height="200" src="https://img.youtube.com/vi/-LzmgOvzWCw/hqdefault.jpg"><br>''',unsafe_allow_html=True,)
+
                     
 if st.session_state.chosen_id == "ChatGPT 4":
     st.button('Reset Chat', on_click=reset_conversation,args=["ChatGPT 4"], key = 'reset2')
