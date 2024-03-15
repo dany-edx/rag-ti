@@ -84,42 +84,24 @@ def set_embedding():
         api_key="c11ed4df2d35412b89a7b51a631bf0e4",
         azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
      api_version="2023-07-01-preview")
-    
 def get_answer_yn(llm, query_str, text_chunks):
     synthesizer = get_response_synthesizer(llm = llm, response_mode="refine", output_cls = Decide_to_search_external_web)
     result_response = synthesizer.get_response(query_str = query_str, text_chunks=[text_chunks], verbose = True)      
     return result_response
-
-st.markdown('''<style>
-                img {border-radius: 10px; }
-                .stExpander {
-                    border: none;
-                    box-shadow: none;
-                }
-            </style>
-            ''',unsafe_allow_html=True,)
-
 if "llm" not in st.session_state:
     st.session_state.llm = set_llm()
-
 if "llm_rag" not in st.session_state:
     st.session_state.llm_rag = set_rag()
-
 if "embedding" not in st.session_state:
     st.session_state.embedding = set_embedding()
-    
 if "llm4" not in st.session_state:
     st.session_state.llm4 = set_llm4()
-    
 if "rag" not in st.session_state:    
     st.session_state.rag = qcell_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
-
 if "webrag" not in st.session_state:
     st.session_state.webrag = web_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
-
 if "service_context" not in st.session_state:
     st.session_state.service_context = ServiceContext.from_defaults(llm=st.session_state.llm,embed_model=st.session_state.embedding,)
-
 if "doc_read_yn" not in st.session_state:
     st.session_state.doc_read_yn = False
 if "youtube_read_yn" not in st.session_state:
@@ -131,7 +113,7 @@ if "webpageall_read_yn" not in st.session_state:
 if "external_docs" not in st.session_state:
     st.session_state.external_docs = []
 if "doc_name" not in st.session_state:
-    st.session_state.display_datasource = ''
+    st.session_state.display_datasource = []
 if "chat_db" not in st.session_state:
     st.session_state.chat_db = None
 if "messages1" not in st.session_state.keys():
@@ -151,10 +133,13 @@ if "chat_engine" not in st.session_state.keys():
     st.session_state.prompts2 = []
     st.session_state.prompts3 = []
     st.session_state.prompts4 = []
-        
-st.sidebar.write('''<img width="210" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg" class="attachment-full size-full wp-image-653" alt="Qcells"><br><br>''',unsafe_allow_html=True,)
-
+if "youtube_embeded_html" not in st.session_state.keys(): 
+    st.session_state.youtube_embeded_html = []
+if "img_embeded_html" not in st.session_state.keys(): 
+    st.session_state.img_embeded_html = []
+    
 def make_data_instance(_docs):
+    display_customized_data.clear()
     st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]    
     st.session_state.prompts4 = []
     with st.spinner("Creating knowledge database"):
@@ -162,23 +147,29 @@ def make_data_instance(_docs):
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
     st.session_state.chat_engine2 = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
     st.session_state.model_select = 'ChatGPT+CustomRAG'
+    
+# st.markdown('''<style>
+#                 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap'); 
+#                 html, body, [class*="css"] {
+#                     font-size:15px; font-family: Arial; white-space: pre-wrap !important;
+#                     color: #2e7d39;
+#                 }
+#                 img {border-radius: 10px;}
+#             </style>
+#             ''',unsafe_allow_html=True,)
 
-css = r'''
-    <style>
-        [data-testid="stForm"] {border: 0px}
-    </style>
-'''
+st.sidebar.write('''<img width="180" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
 
-st.markdown(css, unsafe_allow_html=True)
+
+st.markdown("""<style> div[data-testid="stExpander"]> details {border-width: 0px;} </style>""", unsafe_allow_html=True)
 
 with st.sidebar.expander("DOCUMENT"): 
-    multiple_files = st.file_uploader("Drag & Drop:", accept_multiple_files=True, key="file_uploader")
+    multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
     if len(multiple_files) > 0:
         st.session_state.external_docs = []
-            
         for doc in multiple_files:
             if doc.name.split('.')[-1] == 'pdf':
-                st.session_state.display_datasource = {'pdf': multiple_files[0].getvalue()}
+                st.session_state.display_datasource.append({'pdf': multiple_files[0].getvalue()})
                 string_data = pdf_load_data(doc)
                 pdf_documents = [Document(text=string_data, metadata= {"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(pdf_documents)  
@@ -197,7 +188,7 @@ with st.sidebar.expander("DOCUMENT"):
     btn_doc = st.button("SAVE", on_click = make_data_instance, args=[st.session_state.external_docs], key="btn_doc")  
 
 with st.sidebar.expander("YOUTUBE"): 
-    youtube_data = st.text_input("URL", key='youtubeurl')
+    youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
     if len(youtube_data) > 0:
         meta_data = get_youtube_metadata(youtube_data)
         st.session_state.display_datasource = {'youtube': meta_data['embed_url']}
@@ -290,8 +281,7 @@ def reset_conversation(x):
     if x == 'ChatGPT+CustomRAG':
         st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]    
         st.session_state.prompts4 = []
-
-
+        
 if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
     if st.session_state.chatgpt_mode == 'ChatGPT 3.5':
         st.session_state.prompts1.append(prompt)
@@ -305,8 +295,6 @@ if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt 
     if st.session_state.chatgpt_mode == 'ChatGPT+CustomRAG':
         st.session_state.prompts4.append(prompt)
         st.session_state.messages4.append({"role": "user", "content": prompt})
-
-
 
 col1, col2  = st.columns([1, 3])
 with col1:
@@ -331,17 +319,21 @@ if st.session_state.chosen_id == 'None':
 col1_chat1, col2_chat1 = st.columns([6, 2])
 if st.session_state.chosen_id == "ChatGPT 3.5":
     ise = ''
-    with col1_chat1.container(height=650):
+    with col1_chat1.container(height=650, border= False):
         st.session_state.chat_engine = st.session_state.llm
         st.session_state.chatgpt_mode = 'ChatGPT 3.5'
         for message in st.session_state.messages1: # Display the prior chat messages
-            with st.chat_message(message["role"]):
+            if message["role"] == 'assistant':
+                avatar = '../dev/chatbot.png'
+            else:
+                avatar = '../dev/human.png'
+                
+            with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
-        
         if st.session_state.chatgpt_mode == 'ChatGPT 3.5': 
             if st.session_state.messages1[-1]["role"] == "user":
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                     with st.spinner("Thinking..."):
                         prompt_ = convert_message(st.session_state.messages1)
                         response = st.session_state.chat_engine.chat(prompt_) #결과                                            
@@ -353,39 +345,47 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
                     if answer_eval.Succeed_answer == False:     
                         if answer_eval.Decide_web_search == True:
                             if answer_eval.Reason == True:
-                                with st.spinner("Google + Bing search"):
-                                    # try:
-                                    ise = instance_search_expanding(query = answer_eval.Searchable_query)
-                                    res = st.session_state.webrag.chat(answer_eval.Searchable_query)
-                                    res = res.response
-                                    # except Exception as e:
-                                    #     chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
-                                    #     res = 'retry! ' + str(e)
+                                with st.spinner("Google Search..."):
+                                    try:
+                                        ise = instance_search_expanding(query = answer_eval.Searchable_query)
+                                        st.session_state.youtube_embeded_html = ise.embed_html
+                                        st.session_state.img_embeded_html = ise.img_list
+                                        
+                                        res = st.session_state.webrag.chat(answer_eval.Searchable_query)
+                                        res = res.response
+                                    except Exception as e:
+                                        chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
+                                        res = 'retry! ' + str(e)
                 if res:
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
-    with col2_chat1.container(height=650):    
-        if ise != '':
-            for i in ise.embed_html:
+    with col2_chat1.container(height=650, border= False):    
+        if (len(st.session_state.youtube_embeded_html) + len(st.session_state.img_embeded_html)) > 0:
+            for i in st.session_state.youtube_embeded_html:
                 st.write(f'''{i}<br>''',unsafe_allow_html=True)
-            for i in ise.img_list:
+            for i in st.session_state.img_embeded_html:
                 st.write(f'''{i}<br>''',unsafe_allow_html=True)
         else:
             pass
                     
 if st.session_state.chosen_id == "ChatGPT 4":
-    with st.container(height=650):
+    with st.container(height=650, border= False):
         st.session_state.chat_engine = st.session_state.llm4
         st.session_state.chatgpt_mode = 'ChatGPT 4'
         for message in st.session_state.messages2: # Display the prior chat messages
-            with st.chat_message(message["role"]):
+            if message["role"] == 'assistant':
+                avatar = '../dev/chatbot.png'
+            else:
+                avatar = '../dev/human.png'
+                
+            with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT 4': 
             if st.session_state.messages2[-1]["role"] == "user":
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                     with st.spinner("Thinking..."):
                         prompt_ = convert_message(st.session_state.messages2)
                         response = st.session_state.chat_engine.chat(prompt_) #결과                    
@@ -397,7 +397,7 @@ if st.session_state.chosen_id == "ChatGPT 4":
                     if answer_eval.Succeed_answer == False:     
                         if answer_eval.Decide_web_search == True:
                             if answer_eval.Reason == True:
-                                with st.spinner("Google + Bing search"):
+                                with st.spinner("Google Search..."):
                                     try:
                                         res = st.session_state.webrag.chat(answer_eval.Searchable_query)
                                         res = res.response
@@ -405,22 +405,27 @@ if st.session_state.chosen_id == "ChatGPT 4":
                                         chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
                                         res = 'retry! ' + str(e)
                 if res:
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
         
 if st.session_state.chosen_id == "ChatGPT+RAG":  
-    with st.container(height=650):
+    with st.container(height=650, border= False):
         st.session_state.chat_engine = st.session_state.rag
         st.session_state.chatgpt_mode = 'ChatGPT+RAG'
         for message in st.session_state.messages3: # Display the prior chat messages
-            with st.chat_message(message["role"]):
+            if message["role"] == 'assistant':
+                avatar = '../dev/chatbot.png'
+            else:
+                avatar = '../dev/human.png'
+                
+            with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT+RAG': 
             if st.session_state.messages3[-1]["role"] == "user":
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                     with st.spinner("Thinking..."):
                         try:
                             response = st.session_state.chat_engine.chat(prompt)
@@ -432,19 +437,32 @@ if st.session_state.chosen_id == "ChatGPT+RAG":
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages3.append(message) # Add response to message history        
     
+@st.cache_resource(experimental_allow_widgets=True)
+def display_customized_data(_source):
+    for idx, i in enumerate(_source):
+        if 'pdf' in list(i.keys())[0]:
+            pdf_viewer(input=i['pdf'], width=550, key = 'tmp' + str(idx))
+            
+        if 'youtube' in list(i.keys())[0]:
+            st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
+    
 col1_chat, col2_chat = st.columns([3, 2])
 if st.session_state.chosen_id == "ChatGPT+CustomRAG":
-    with col1_chat.container(height=650):
+    with col1_chat.container(height=650, border= False):
         st.session_state.chatgpt_mode = 'ChatGPT+CustomRAG'    
         for message in st.session_state.messages4: # Display the prior chat messages
-            with st.chat_message(message["role"]):
+            if message["role"] == 'assistant':
+                avatar = '../dev/chatbot.png'
+            else:
+                avatar = '../dev/human.png'
+                
+            with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT+CustomRAG':
             try:
-                    
                 if st.session_state.messages4[-1]["role"] == "user":
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                         with st.spinner("Thinking..."):
                             response = st.session_state.chat_engine2.chat(prompt)
                             res = response.response
@@ -458,17 +476,16 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
                         st.session_state.messages4.append(message) # Add response to message history        
                         st.session_state.chat_db.summary = []
     
-                        with st.chat_message("assistant"):
+                        with st.chat_message("assistant", avatar = '../dev/chatbot.png'):
                             chat_box(i)
                 
     
             except Exception as e:
                 st.warning('Insert Materials' + str(e), icon="⚠️")
                 pass
-    with col2_chat.container(height=650):
-        if 'pdf' in st.session_state.display_datasource:
-            pdf_viewer(input=st.session_state.display_datasource['pdf'], width=550)        
-        if 'youtube' in st.session_state.display_datasource:            
-            st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(st.session_state.display_datasource['youtube']),unsafe_allow_html=True,)
+    with col2_chat.container(height=650, border= False):
+        if len(st.session_state.display_datasource) > 0:
+            display_customized_data(st.session_state.display_datasource)
+            st.session_state.display_datasource = []
 
 

@@ -32,6 +32,8 @@ from llama_index.core.retrievers import BaseRetriever
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time 
+import praw
+from datetime import datetime
 
 class global_obj(object):
     chrome_options = Options()
@@ -243,6 +245,38 @@ class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         result_list_of_dicts = [{'Url': item[0].replace('Link: ', ''), 'Title': item[1], 'Abstract': item[2]} for item in merge_list]                    
         return result_list_of_dicts[:3]
 
+class RedditMarketingSearchToolSpec(BaseToolSpec):
+    # spec_functions = ['reddit_post_search']
+    """SNS Reddit marketing search tool spec."""
+    def reddit_post_search(self, query:str):
+        """
+        Search SNS Reddit about solar marketing information. answer a query about solar panel users opinions.
+        Return post title, url, content and comments as json.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+
+        reddit = praw.Reddit(client_id='GIbgvR6hff64rcsIHihC3g',
+                             client_secret='2yora5MRJLBsGLfGxj_5ooDRCf68Kw',
+                             user_agent='my_apps/1.0')
+        subreddit = reddit.subreddit('solar')
+        search_results = subreddit.search(query, limit=3, time_filter= 'month')
+
+        content = []
+        total_comments = []
+        for idx, submission in enumerate(search_results):
+            comments = []
+            for i, comment in enumerate(submission.comments.list()):    
+                try:
+                    comments.append("comment{} : {}".format(i, comment.body))    
+                except:
+                    pass
+            content.append([submission.title, submission.url,submission.selftext, comments[:5]])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
+        return result_dict_list
+
+
 class ComputerSciencePaperSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """computer science related paper search tool spec."""
     def computer_science_paper_search(self, query:str, is_more=False):
@@ -395,7 +429,7 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         driver.quit()
         return result_dict_list[:3]
         
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec):
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec):
     """Google random search tool spec."""
     spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
     def get_instinct_search_url(self, query):
@@ -480,7 +514,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search", "document_analyzer"]
+    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context

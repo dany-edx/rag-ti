@@ -21,6 +21,13 @@ from pptx import Presentation
 import fitz
 from pytube import Channel,YouTube #키워드 -> url
 # from youtube_transcript_api import YouTubeTranscriptApi
+from llama_index.core.tools import RetrieverTool
+from llama_index.core.selectors import (
+    PydanticMultiSelector,
+    PydanticSingleSelector,
+)
+from llama_index.core.retrievers import RouterRetriever
+
 
 llm =AzureOpenAI(
             model="gpt-35-turbo",
@@ -96,122 +103,82 @@ class Decide_to_search_external_web(BaseModel):
     Reason: bool
 
 mrs = map_reduced_summary(llm = llm, embedding = embedding)
-
 class create_db_chat(BaseToolSpec):
-    spec_functions = ['query_pdfs', 'retreiever_documents']
+    spec_functions = ['retriever_documents']
     
     def __init__(self, _docs, llm, embedding, service_context):
         self.llm = llm
         self.embedding = embedding
         self.service_context = service_context
-        self.splitter = SentenceSplitter(chunk_size=512,chunk_overlap=50)
-        self.splitter2 = SentenceSplitter(chunk_size=1024,chunk_overlap=100)
+        self.splitter = SentenceSplitter(chunk_size=256,chunk_overlap=25)
+        self.splitter2 = SentenceSplitter(chunk_size=512,chunk_overlap=50)
         self.splitter_code = CodeSplitter(language="python", chunk_lines=40, chunk_lines_overlap=15, max_chars=1500)        
         self.response_synthesizer = get_response_synthesizer(llm = self.llm, response_mode="tree_summarize", use_async=True)
         self.query_engine_tools = []
         self.summary = []
 
-        # flat_list = sum(_docs, [])
-        # if len(flat_list)>1:
-        #     self.index_all = GPTVectorStoreIndex.from_documents(flat_list, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
-        #     self.queryengine_all = self.index_all.as_query_engine()
-        #     self.queryall_engine_tools.append(QueryEngineTool(query_engine= self.queryengine_all, metadata=ToolMetadata(name="document_all"
-        #                                                                                                  , description= "Please answer questions about the content of the this is merged all documents")))
-    
         for idx, doc in enumerate(_docs):
             idx = str(idx)
             if doc[0].metadata['title'].split('.')[-1] == 'py':
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter_code],show_progress=True)            
                 self.queryengine = self.index_node.as_query_engine()                
-                self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine, metadata=ToolMetadata(name="Python_script_" + idx
-                                                                                                                     , description= "Please answer questions about the content of the this python script")))
+                self.query_engine_tools.append(RetrieverTool(query_engine= self.queryengine, 
+                                                             name="Python_script_" + idx,
+                                                             description= "Please answer questions about the content of the this python script"))
                 self.summary = ''
     
             elif doc[0].metadata['title'].split('.')[-1] == 'pdf':
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.queryengine = self.index_node.as_query_engine()
-                self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine, metadata=ToolMetadata(name=doc[0].metadata['title']
-                                                                                                             , description= "Please answer questions about the content of the {}".format(doc[0].metadata['title']))))
+                self.retriever_engine = self.index_node.as_retriever()
+                self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                                                                            name="pdf" + idx,
+                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                                               
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
                 
             elif doc[0].metadata['title'].split('.')[-1] == 'pptx':
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.queryengine = self.index_node.as_query_engine()
-                self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine, metadata=ToolMetadata(name="pptx_" + idx
-                                                                                                                     , description= "Please answer questions about the content of the this PPTX document")))
-                self.summary.append(mrs.create_document_summary('\n'.join([i.text for i in doc])))
+                self.retriever_engine = self.index_node.as_retriever()
+                self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                                                                            name="pptx_" + idx,
+                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
                 
             elif doc[0].metadata['resource'] =='web_page': 
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.queryengine = self.index_node.as_query_engine()
-                self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine, metadata=ToolMetadata(name="web_document_" + idx
-                                                                                                                     , description= "Please answer questions about the content of the this document")))  
-                self.summary.append(mrs.create_document_summary('\n'.join([i.text for i in doc])))
-                
-            elif doc[0].metadata['resource'] =='web_allpage':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)
-                node_queryengine = self.index_node.as_query_engine()
-                self.query_engine_tools.append(QueryEngineTool(query_engine= node_queryengine, metadata=ToolMetadata(name="web_node_" + idx
-                                                                                                                     , description= "Please answer questions about the content of the this node")))   
-                self.summary = ''
-                
+                self.retriever_engine = self.index_node.as_retriever()
+                self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                                                                            name="web_html_" + idx,
+                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
             else:
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)
-                self.queryengine = self.index_node.as_query_engine()            
-                self.query_engine_tools.append(QueryEngineTool(query_engine= self.queryengine, metadata=ToolMetadata(name="Youtube_transcript_"+ idx
-                                                                                                                    , description= "Please answer questions about the content of the this youtube transcript")))
-                self.summary.append(mrs.create_youtube_summary('\n'.join([i.text for i in doc])))
+                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
+                self.retriever_engine = self.index_node.as_retriever()
+                self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                                                                            name="youtube_transcript_" + idx,
+                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
             
-            self.retengine = self.index_node.as_retriever()
-            
-        self.subquery_engine = SubQuestionQueryEngine.from_defaults(
-            query_engine_tools=self.query_engine_tools,
-            use_async=True,
-            service_context=self.service_context,
-            response_synthesizer = get_response_synthesizer(response_mode="accumulate", llm = self.llm)
-            )   
+    def documentize(self, text_list, url):
+        patent_data_documents = [Document(text=text_list, metadata = {'url' : url})]
+        splitter = SentenceSplitter(chunk_size=256,chunk_overlap=20)
+        patent_index = VectorStoreIndex.from_documents(documents=patent_data_documents, transformations=[splitter], service_context = self.service_context, show_progress=True)
+        bm25_retriever = BM25Retriever.from_defaults(index=patent_index, similarity_top_k=1)
+        vector_retriever = patent_index.as_retriever(similarity_top_k=1)
+        hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
+        return hybrid_retriever
 
-    def get_answer_yn(self, query_str, text_chunks):
-        synthesizer = get_response_synthesizer(response_mode="refine", llm = self.llm, output_cls = Decide_to_search_external_web)
-        result_response = synthesizer.get_response(query_str = query_str, text_chunks=[text_chunks], verbose = True)      
-        return result_response
-
-    def query_pdfs(self, query:str):
+    def retriever_documents(self, query:str):
         """
         Answer a query about extracted documents.
-        Return answers
-
-        Args:
-            query (str): question about extracted documents.
-        """
-        res = self.subquery_engine.query(query)
-        answers = res.response.split('---------------------')
-        succeed_answers = []
-        for ans in answers:
-            out = self.get_answer_yn(query, ans)
-            if out.Succeed_answer == True:
-                succeed_answers.append(ans)
-        return '\n'.join(succeed_answers)
-
-    def retreiever_documents(self, query:str):
-        """
-        find a part of document related to query.
         Return retrieved texts.
-        
+
         Args:
             query (str): question about extracted documents.
         """
-        nodes = self.retengine.retrieve(query)
+        retriever = RouterRetriever(
+            selector=PydanticMultiSelector.from_defaults(llm=self.llm),
+            llm = self.llm, 
+            retriever_tools=self.query_engine_tools)
+        nodes = retriever.retrieve(query)
         return [i.text for i in nodes]
-
-    # def query_merged_pdfs(self, query:str):
-    #     self.index_node.
-    #     "Answer a query. this is backup search in case of failed to retrieve appropriate answer from query_pdfs."   
-    #     query_engine_tools = [QueryEngineTool(query_engine= self.queryengine_all, metadata=ToolMetadata(name="document_all"
-    #                                                                                                      , description= "Please answer questions about the content of the this is merged all documents"))]
-    #     self.subquery_engine_merged = SubQuestionQueryEngine.from_defaults(
-    #             query_engine_tools=query_engine_tools,
-    #             use_async=True,
-    #         )   
-    #     res = self.subquery_engine_merged.query(query)
-    #     return res.response
