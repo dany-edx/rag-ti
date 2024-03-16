@@ -325,16 +325,16 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
         st.session_state.chatgpt_mode = 'ChatGPT 3.5'
         for message in st.session_state.messages1: # Display the prior chat messages
             if message["role"] == 'assistant':
-                avatar = '../src/chatbot.png'
+                avatar = './src/chatbot.png'
             else:
-                avatar = '../src/human.png'
+                avatar = './src/human.png'
                 
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT 3.5': 
             if st.session_state.messages1[-1]["role"] == "user":
-                with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
                         prompt_ = convert_message(st.session_state.messages1)
                         response = st.session_state.chat_engine.chat(prompt_) #결과                                            
@@ -358,7 +358,7 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
                                         chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
                                         res = 'retry! ' + str(e)
                 if res:
-                    with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
@@ -377,16 +377,16 @@ if st.session_state.chosen_id == "ChatGPT 4":
         st.session_state.chatgpt_mode = 'ChatGPT 4'
         for message in st.session_state.messages2: # Display the prior chat messages
             if message["role"] == 'assistant':
-                avatar = '../src/chatbot.png'
+                avatar = './src/chatbot.png'
             else:
-                avatar = '../src/human.png'
+                avatar = './src/human.png'
                 
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT 4': 
             if st.session_state.messages2[-1]["role"] == "user":
-                with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
                         prompt_ = convert_message(st.session_state.messages2)
                         response = st.session_state.chat_engine.chat(prompt_) #결과                    
@@ -406,7 +406,7 @@ if st.session_state.chosen_id == "ChatGPT 4":
                                         chat_engine = ReActAgent.from_tools(GoogleRandomSearchToolSpec().to_tool_list(), max_iterations = 10,llm = st.session_state.llm, verbose = True)
                                         res = 'retry! ' + str(e)
                 if res:
-                    with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
                         message = {"role": "assistant", "content": res}
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
@@ -417,16 +417,16 @@ if st.session_state.chosen_id == "ChatGPT+RAG":
         st.session_state.chatgpt_mode = 'ChatGPT+RAG'
         for message in st.session_state.messages3: # Display the prior chat messages
             if message["role"] == 'assistant':
-                avatar = '../src/chatbot.png'
+                avatar = './src/chatbot.png'
             else:
-                avatar = '../src/human.png'
+                avatar = './src/human.png'
                 
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
         if st.session_state.chatgpt_mode == 'ChatGPT+RAG': 
             if st.session_state.messages3[-1]["role"] == "user":
-                with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
                         try:
                             response = st.session_state.chat_engine.chat(prompt)
@@ -453,9 +453,9 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
         st.session_state.chatgpt_mode = 'ChatGPT+CustomRAG'    
         for message in st.session_state.messages4: # Display the prior chat messages
             if message["role"] == 'assistant':
-                avatar = '../src/chatbot.png'
+                avatar = './src/chatbot.png'
             else:
-                avatar = '../src/human.png'
+                avatar = './src/human.png'
                 
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
@@ -463,7 +463,7 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
         if st.session_state.chatgpt_mode == 'ChatGPT+CustomRAG':
             try:
                 if st.session_state.messages4[-1]["role"] == "user":
-                    with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
                         with st.spinner("Thinking..."):
                             response = st.session_state.chat_engine2.chat(prompt)
                             res = response.response
@@ -477,7 +477,7 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
                         st.session_state.messages4.append(message) # Add response to message history        
                         st.session_state.chat_db.summary = []
     
-                        with st.chat_message("assistant", avatar = '../src/chatbot.png'):
+                        with st.chat_message("assistant", avatar = './src/chatbot.png'):
                             chat_box(i)
                 
     
