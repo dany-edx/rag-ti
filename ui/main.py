@@ -144,7 +144,6 @@ def make_data_instance(_docs):
     display_customized_data.clear()
     st.session_state.messages4 = [{"role": "assistant", "content": "Hello, World"}]    
     st.session_state.prompts4 = []
-    st.write(_docs)
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
