@@ -16,9 +16,11 @@ from llama_index.core.response_synthesizers import TreeSummarize, CompactAndRefi
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.schema import NodeWithScore, Node
 import json
+from llama_index.core.llms import ChatMessage, MessageRole
 from web_catch import * 
 import sys
 sys.path.append('../utils')
+from qcells_web_instance_search import instance_search_expanding
 from yahoo_finance import * 
 from llama_index.core.agent import ReActAgent
 from langchain_community.document_loaders import AsyncChromiumLoader
@@ -26,6 +28,8 @@ from langchain_community.document_transformers import BeautifulSoupTransformer
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
 import re
+from io import BytesIO
+from pptx import Presentation
 from bs4 import BeautifulSoup
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.retrievers import BaseRetriever
@@ -34,6 +38,7 @@ from selenium.webdriver.chrome.options import Options
 import time 
 import praw
 from datetime import datetime
+from llama_index.agent.openai import OpenAIAgent
 
 class global_obj(object):
     chrome_options = Options()
@@ -51,7 +56,7 @@ class Decide_to_search_external_web(BaseModel):
         Verifying if the response to the question is accurate, and deciding whether to conduct an external search.
         return
             Succeed_answer (bool) : check wether answer is queried well.
-            Decide_web_search (bool): If user want to assess the request for the latest information in the question.
+                Decide_web_search (bool): If user want to assess the request for the latest information in the question.
             Searchable_query (str): Assessing the question in terms of easily searchable keywords on Google.(limited 4-words).
             Reason (bool): if query is clear question.
     """
@@ -138,7 +143,17 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-    
+
+        if 'https://www.cpuc.ca.gov' in url:
+            if self.url != url:
+                text_list = []
+                for a_tag in soup.find_all('p'):
+                    text_list.append(a_tag.text)
+                text_list = ''.join(text_list)
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]
+
         elif 'https://paperswithcode.com' in url:
             href_list = []
             web_list = []
@@ -186,7 +201,39 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-        
+
+        elif '.pptx' in url:
+            if self.url != url:
+                response = requests.get(url)
+                pptx_data = BytesIO(response.content)
+                presentation = Presentation(pptx_data)
+                text_list = ""
+                for i, slide in enumerate(presentation.slides):
+                    text_list += f"\n\nSlide #{i}: \n"
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text_list += f"{shape.text}\n" 
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]
+            
+        elif 'www.reddit.com' in url:
+            if self.url != url:
+                reddit = praw.Reddit(client_id='GIbgvR6hff64rcsIHihC3g',
+                                 client_secret='2yora5MRJLBsGLfGxj_5ooDRCf68Kw',
+                                 user_agent='my_apps/1.0')
+                post_id = url.split('comments/')[-1].split('/')[0]
+                submission = reddit.submission(id=post_id)
+                content = []
+                comments =  []
+                total_comments = []
+                for i, comment in enumerate(submission.comments.list()):    
+                    try:
+                        comments.append("comment{} : {}".format(i, comment.body))    
+                    except:
+                        pass
+                content.append([submission.title, submission.url,submission.selftext, comments[:3]])
+                result = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
         else:
             if self.url != url:
                 text_list = []
@@ -212,6 +259,33 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
         vector_retriever = patent_index.as_retriever(similarity_top_k=1)
         hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
         return hybrid_retriever
+
+class CaliforniaUtilityCommisionSearchToolSepc(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
+    # spec_functions = ['commission_search']
+    """California public solar energy utility commission forum"""
+    def commission_search(self, query:str):
+        """
+        Search California energy commision forum for policies, commissions and regulations.
+        Return title, abstract and url as json.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        url = 'https://www.cpuc.ca.gov/search#q={}&sort=relevancy'.format(query)
+        driver = webdriver.Chrome( options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(3)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.close()
+        
+        div_tags = soup.find_all('div', {'class':'coveo-list-layout CoveoResult'})
+        text_list = []
+        for div in div_tags:
+            a_tags = div.find_all('a')
+            text_list.append([a_tags[0].text, div.text, a_tags[0].attrs['href']])
+        result_dict_list = [{'title': item[0], 'abstract': item[1], 'url': item[2]} for item in text_list]
+        return result_dict_list[:5]
         
 class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """Jistia Web Patent random search tool spec."""
@@ -428,8 +502,48 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         driver.delete_all_cookies()
         driver.quit()
         return result_dict_list[:3]
+
+class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
+    """Texas States Energy market, policy, trend and regulation search tool spec."""
+    # spec_functions = ['texas_information_search']
+    def texas_information_search(self, query):
+        """
+        Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
+        regulations, resources, and tools for market participants, and information on events and education programs.
+
+        Return title, url and abstract as json.
+        Args:
+            query (str): searchable words when search dissertation (limited 4 words)
+        """    
+        url= 'https://www.ercot.com/search?q={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
         
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec):
+        title = []
+        url = []
+        abstract = []
+        div_tags = soup.find_all('div', id = 'search-results')
+        for a in div_tags[0].find_all(['div','a']):
+            if 'href' in a.attrs:
+                if 'www.ercot.com' in a.attrs['href']:
+                    url.append(a.attrs['href'])    
+                else:
+                    url.append('https://www.ercot.com' + a.attrs['href'])
+                title.append(a.text)
+            if 'class' in a.attrs:
+                if 'my-2' in a['class']:
+                    abstract.append(a.text)
+        content = []
+        for t, u, a in zip(title, url, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
+        
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec):
     """Google random search tool spec."""
     spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
     def get_instinct_search_url(self, query):
@@ -468,7 +582,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
         )        
         res = program(query = query, context = result_text)        
         return res.Ingisht
-
+    
     def get_google_searched_urls(self, url):
         r=requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -514,7 +628,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer"]
+    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context
@@ -619,7 +733,9 @@ def web_engine(llm, embedding):
     web_tool_spec = GoogleRandomSearchToolSpec()
     web_tool_spec.service_context = service_context
     web_tool_spec.llm = llm
-    chat_engine = ReActAgent.from_llm(web_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
+    chat_engine = OpenAIAgent.from_llm(web_tool_spec.to_tool_list(),
+                                       prefix_messages=[ChatMessage(role="system", content="Check if the user query need to use google search or not. if it need, use google search tool.")],
+                                       memory=memory, max_iterations = 10, llm = llm, verbose = True)
     return chat_engine
 
 # if __name__:

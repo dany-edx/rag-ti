@@ -29,23 +29,25 @@ from web_crack import RemoteDepthReader
 from youtube_transcript_api import YouTubeTranscriptApi
 from streamlit_pdf_viewer import pdf_viewer
 import phoenix as px
-from phoenix.trace import DocumentEvaluations, SpanEvaluations
-from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
-from phoenix.evals import (
-    HallucinationEvaluator,
-    OpenAIModel,
-    QAEvaluator,
-    RelevanceEvaluator,
-    run_evals,
-)
 import base64
 import os
-from pptx import Presentation
-import pdfkit
-from streamlit_extras.app_logo import add_logo
-
+import json
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
+
+class global_obj(object):
+    chrome_options = Options()
+    chrome_options.add_argument("start-maximized")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("detach", True)
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
 
 @st.cache_resource
 def lanch_px_app():
@@ -117,13 +119,13 @@ if "doc_name" not in st.session_state:
 if "chat_db" not in st.session_state:
     st.session_state.chat_db = None
 if "messages1" not in st.session_state.keys():
-    st.session_state.messages1 = [{"role": "assistant", "content": "Hi"}]
+    st.session_state.messages1 = [{"role": "assistant", "content": "Hello, World"}]
 if "messages2" not in st.session_state.keys(): 
-    st.session_state.messages2 = [{"role": "assistant", "content": "Hi"}]
+    st.session_state.messages2 = [{"role": "assistant", "content": "Hello, World"}]
 if "messages3" not in st.session_state.keys(): 
-    st.session_state.messages3 = [{"role": "assistant", "content": "Hi"}]
+    st.session_state.messages3 = [{"role": "assistant", "content": "Hello, World"}]
 if "messages4" not in st.session_state.keys(): 
-    st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]
+    st.session_state.messages4 = [{"role": "assistant", "content": "Hello, World"}]
 if "chatgpt_mode" not in st.session_state:
     st.session_state.chatgpt_mode = 'ChatGPT 3.5'
 if "chat_engine4" not in st.session_state.keys(): 
@@ -140,22 +142,22 @@ if "img_embeded_html" not in st.session_state.keys():
     
 def make_data_instance(_docs):
     display_customized_data.clear()
-    st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]    
+    st.session_state.messages4 = [{"role": "assistant", "content": "Hello, World"}]    
     st.session_state.prompts4 = []
+    st.write(_docs)
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
     st.session_state.chat_engine2 = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
-    st.session_state.model_select = 'ChatGPT+CustomRAG'
+    st.session_state.model_select = 'ChatGPT+MyData'
     
 st.markdown('''<style>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
             <style>
-                body {
-                    font-family: 'Lato', sans-serif; /* LATO 폰트 적용 */
-                }
-            img {border-radius: 10px;}
-            div[data-testid="stExpander"]> details {border-width: 0px;} 
+                body {font-size: 5px}
+                img {border-radius: 10px;}
+                div[data-testid="stExpander"]> details {border-width: 0px;} 
+                div[data-testid="stCodeBlock"]> pre {background: rgb(248, 249, 255, 0);} 
             </style>
             ''',unsafe_allow_html=True,)
 
@@ -192,7 +194,7 @@ with st.sidebar.expander("YOUTUBE"):
     youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
     if len(youtube_data) > 0:
         meta_data = get_youtube_metadata(youtube_data)
-        st.session_state.display_datasource = {'youtube': meta_data['embed_url']}
+        st.session_state.display_datasource.append({'youtube': meta_data['embed_url']})
         data = YouTubeTranscriptApi.get_transcript(youtube_data.split('v=')[-1])
         documents = []
         for i in data:
@@ -244,8 +246,15 @@ with st.sidebar.expander("YOUTUBE"):
 with st.sidebar.expander("WEB PAGE"): 
     single_page_data = st.text_input("URL", key = 'single_weburl') 
     if len(single_page_data) > 0:
-        r=requests.get(single_page_data)
-        soup = BeautifulSoup(r.content, 'html.parser')
+        
+        driver = webdriver.Chrome( options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(single_page_data) 
+        time.sleep(3)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        # r=requests.get(single_page_data)
+        # soup = BeautifulSoup(r.content, 'html.parser')
         anchor_elements = soup.find_all('p')
         result_string = '\n'.join([i.text for i in anchor_elements])                
         web_data_documents = [Document(text=result_string, metadata= {'title':  'web_page', 'resource' : 'web_page'})]
@@ -266,21 +275,21 @@ def reset_conversation(x):
         st.session_state.chat_engine = st.session_state.llm
         st.session_state.webrag.reset()
         st.session_state.webrag = web_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
-        st.session_state.messages1 = [{"role": "assistant", "content": "Hi"}]    
+        st.session_state.messages1 = [{"role": "assistant", "content": "Hello, World"}]    
         st.session_state.prompts1 = []
     if x == 'ChatGPT 4':
         st.session_state.chat_engine_llm4 = st.session_state.llm4
         st.session_state.webrag.reset()
         st.session_state.webrag = web_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
-        st.session_state.messages2 = [{"role": "assistant", "content": "Hi"}]    
+        st.session_state.messages2 = [{"role": "assistant", "content": "Hello, World"}]    
         st.session_state.prompts2 = []
-    if x == 'ChatGPT+RAG':
+    if x == 'ChatGPT+TechSensing':
         st.session_state.rag.reset()
         st.session_state.rag = qcell_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
-        st.session_state.messages3 = [{"role": "assistant", "content": "Hi"}]    
+        st.session_state.messages3 = [{"role": "assistant", "content": "Hello, World"}]    
         st.session_state.prompts3 = []
-    if x == 'ChatGPT+CustomRAG':
-        st.session_state.messages4 = [{"role": "assistant", "content": "Hi"}]    
+    if x == 'ChatGPT+MyData':
+        st.session_state.messages4 = [{"role": "assistant", "content": "Hello, World"}]    
         st.session_state.prompts4 = []
         
 if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
@@ -290,33 +299,45 @@ if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt 
     if st.session_state.chatgpt_mode == 'ChatGPT 4':
         st.session_state.prompts2.append(prompt)
         st.session_state.messages2.append({"role": "user", "content": prompt})
-    if st.session_state.chatgpt_mode == 'ChatGPT+RAG':
+    if st.session_state.chatgpt_mode == 'ChatGPT+TechSensing':
         st.session_state.prompts3.append(prompt)
         st.session_state.messages3.append({"role": "user", "content": prompt})
-    if st.session_state.chatgpt_mode == 'ChatGPT+CustomRAG':
+    if st.session_state.chatgpt_mode == 'ChatGPT+MyData':
         st.session_state.prompts4.append(prompt)
         st.session_state.messages4.append({"role": "user", "content": prompt})
 
 col1, col2  = st.columns([1, 3])
 with col1:
-    st.session_state.chosen_id = st.selectbox('', ('ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+RAG', 'ChatGPT+CustomRAG'), label_visibility="collapsed", key = 'model_select')
+    st.session_state.chosen_id = st.selectbox('', ('ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+TechSensing', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
 with col2:
     st.button('Reset Chat', on_click=reset_conversation,args=[st.session_state.chosen_id], key = 'reset1')
 
 def chat_box(text):
     texts = text.split('```')
     for i in texts:
-        with stylable_container(
-            "codeblock",
-            """
-            code {font-size:13px; font-family: Arial; white-space: pre-wrap !important;}
-            """,):
-            x = st.code(i, language = 'md')    
-    return x
-
+        if 'python' in i.split('\n')[0]:
+            with stylable_container(
+                "codeblock2",
+                """
+                div {background-color:rgb(0,0,0,0.1); border-radius:10px} 
+                
+                code {font-size:13px;font-family: Arial;}
+                """,):
+                x = st.code(i, language = 'python', line_numbers = True)
+        else:
+            with stylable_container(
+                "codeblock",
+                """
+                div {background-color:rgb(0,0,0,0)}
+                code {font-size:13px; font-family: Arial; white-space: pre-wrap !important;}
+                """,):
+                x = st.code(i, language = 'md')
+                print(i)
+    # return x
 if st.session_state.chosen_id == 'None':
     st.session_state.chosen_id = 'ChatGPT 3.5'
 
+col1_chat1, col2_chat1 = st.columns([6, 2])
 col1_chat1, col2_chat1 = st.columns([6, 2])
 if st.session_state.chosen_id == "ChatGPT 3.5":
     ise = ''
@@ -411,10 +432,10 @@ if st.session_state.chosen_id == "ChatGPT 4":
                         st.session_state.messages1.append(message) # Add response to message history           
                         chat_box(res)         
         
-if st.session_state.chosen_id == "ChatGPT+RAG":  
+if st.session_state.chosen_id == "ChatGPT+TechSensing":  
     with st.container(height=650, border= False):
         st.session_state.chat_engine = st.session_state.rag
-        st.session_state.chatgpt_mode = 'ChatGPT+RAG'
+        st.session_state.chatgpt_mode = 'ChatGPT+TechSensing'
         for message in st.session_state.messages3: # Display the prior chat messages
             if message["role"] == 'assistant':
                 avatar = './src/chatbot.png'
@@ -424,7 +445,7 @@ if st.session_state.chosen_id == "ChatGPT+RAG":
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
-        if st.session_state.chatgpt_mode == 'ChatGPT+RAG': 
+        if st.session_state.chatgpt_mode == 'ChatGPT+TechSensing': 
             if st.session_state.messages3[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
@@ -448,9 +469,9 @@ def display_customized_data(_source):
             st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
     
 col1_chat, col2_chat = st.columns([3, 2])
-if st.session_state.chosen_id == "ChatGPT+CustomRAG":
+if st.session_state.chosen_id == "ChatGPT+MyData":
     with col1_chat.container(height=650, border= False):
-        st.session_state.chatgpt_mode = 'ChatGPT+CustomRAG'    
+        st.session_state.chatgpt_mode = 'ChatGPT+MyData'    
         for message in st.session_state.messages4: # Display the prior chat messages
             if message["role"] == 'assistant':
                 avatar = './src/chatbot.png'
@@ -460,7 +481,7 @@ if st.session_state.chosen_id == "ChatGPT+CustomRAG":
             with st.chat_message(message["role"], avatar = avatar):
                 msg = message["content"]
                 chat_box(msg)
-        if st.session_state.chatgpt_mode == 'ChatGPT+CustomRAG':
+        if st.session_state.chatgpt_mode == 'ChatGPT+MyData':
             try:
                 if st.session_state.messages4[-1]["role"] == "user":
                     with st.chat_message("assistant", avatar = './src/chatbot.png'):

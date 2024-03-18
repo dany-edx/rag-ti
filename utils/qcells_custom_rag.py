@@ -20,7 +20,6 @@ import io
 from pptx import Presentation
 import fitz
 from pytube import Channel,YouTube #키워드 -> url
-# from youtube_transcript_api import YouTubeTranscriptApi
 from llama_index.core.tools import RetrieverTool
 from llama_index.core.selectors import (
     PydanticMultiSelector,
@@ -159,15 +158,6 @@ class create_db_chat(BaseToolSpec):
                                                                             description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
             
-    def documentize(self, text_list, url):
-        patent_data_documents = [Document(text=text_list, metadata = {'url' : url})]
-        splitter = SentenceSplitter(chunk_size=256,chunk_overlap=20)
-        patent_index = VectorStoreIndex.from_documents(documents=patent_data_documents, transformations=[splitter], service_context = self.service_context, show_progress=True)
-        bm25_retriever = BM25Retriever.from_defaults(index=patent_index, similarity_top_k=1)
-        vector_retriever = patent_index.as_retriever(similarity_top_k=1)
-        hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
-        return hybrid_retriever
-
     def retriever_documents(self, query:str):
         """
         Answer a query about extracted documents.
