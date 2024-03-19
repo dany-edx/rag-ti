@@ -191,6 +191,7 @@ def message_hist_display(message_history):
 
 def websearch_func(prompt, response):
     answer_eval = get_answer_yn(st.session_state.llm, prompt, response)
+    print(answer_eval)
     res = None
     if answer_eval.Succeed_answer == False:     
         if answer_eval.Decide_web_search == True:
@@ -216,8 +217,6 @@ def display_customized_data(_source):
             st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
         if 'HTML' in list(i.keys())[0]:
             st.write(i['HTML'])
-
-
 
 def convert_message(x):
     return [ChatMessage(role=i['role'], content=i['content']) for i in x]        
@@ -365,6 +364,7 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
                     message = {"role": "assistant", "content": res}
                     st.session_state.messages1.append(message) # Add response to message history           
                     chat_box(res)         
+
     with col2_chat1.container(height=650, border= False):    
         if (len(st.session_state.youtube_embeded_html) + len(st.session_state.img_embeded_html)) > 0:
             for i in st.session_state.youtube_embeded_html:

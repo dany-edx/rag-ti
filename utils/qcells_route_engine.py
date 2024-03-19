@@ -55,15 +55,16 @@ class Decide_to_search_external_web(BaseModel):
     """
         Verifying if the response to the question is accurate, and deciding whether to conduct an external search.
         return
-            Succeed_answer (bool) : check wether answer is queried well.
-                Decide_web_search (bool): If user want to assess the request for the latest information in the question.
-            Searchable_query (str): Assessing the question in terms of easily searchable keywords on Google.(limited 4-words).
+            Succeed_answer (bool) : check if answer is acceptable or mentioned real-time data.
+            Decide_web_search (bool): check if need to Assess internet to answer.
+            Searchable_query (str): searchable keywords on Google.(limited 4-words)
             Reason (bool): if query is clear question.
     """
     Succeed_answer: bool
     Decide_web_search: bool
     Searchable_query: str
     Reason: bool
+
 
 class Result(BaseModel):
     """
