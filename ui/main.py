@@ -35,6 +35,9 @@ import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
+from streamlit_option_menu import option_menu
+from annotated_text import *
+from collections import Counter
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 
@@ -104,14 +107,6 @@ if "webrag" not in st.session_state:
     st.session_state.webrag = web_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
 if "service_context" not in st.session_state:
     st.session_state.service_context = ServiceContext.from_defaults(llm=st.session_state.llm,embed_model=st.session_state.embedding,)
-if "doc_read_yn" not in st.session_state:
-    st.session_state.doc_read_yn = False
-if "youtube_read_yn" not in st.session_state:
-    st.session_state.youtube_read_yn = False
-if "webpage_read_yn" not in st.session_state:
-    st.session_state.webpage_read_yn = False
-if "webpageall_read_yn" not in st.session_state:
-    st.session_state.webpageall_read_yn = False
 if "external_docs" not in st.session_state:
     st.session_state.external_docs = []
 if "display_datasource" not in st.session_state:
@@ -208,7 +203,6 @@ def websearch_func(prompt, response):
                         res = 'retry! ' + str(e)
     return res
     
-# @st.cache_resource(experimental_allow_widgets=True)
 def display_customized_data(_source):
     for idx, i in enumerate(_source):
         if 'pdf' in list(i.keys())[0]:
@@ -216,10 +210,7 @@ def display_customized_data(_source):
         if 'youtube' in list(i.keys())[0]:
             st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
         if 'HTML' in list(i.keys())[0]:
-            st.write(i['HTML'])
-
-def convert_message(x):
-    return [ChatMessage(role=i['role'], content=i['content']) for i in x]        
+            st.markdown(i['HTML'].replace('$', '\$'))
 
 def reset_conversation(x):
     st.session_state.llm = set_llm()
@@ -304,13 +295,19 @@ def web_uploader():
         web_data_documents = [Document(text=result_string, metadata= {'title':  st.session_state.single_page_data, 'resource' : 'web_page'})]
         st.session_state.display_datasource.append({'HTML': result_string})
         st.session_state.external_docs.append(web_data_documents)
-        
+
+# st.markdown(""" <style> .font {
+#             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap');
+#             font-size:15px ; font-family: 'Cooper Black'; color: #FF9633;} </style> 
+#             """, unsafe_allow_html=True)
+
+# # st.markdown('<p class="font">Guess the object Names</p>', unsafe_allow_html=True)
 st.markdown('''
             <style>
-                body {font-size: 7px}
                 img {border-radius: 10px;}
                 div[data-testid="stExpander"]> details {border-width: 0px;} 
                 div[data-testid="stCodeBlock"]> pre {background: rgb(248, 249, 255, 0);} 
+                div[data-testid="stMarkdownContainer"]> span{font-size:0.5rem}
             </style>
             ''',unsafe_allow_html=True,)
 
@@ -320,7 +317,6 @@ with col1:
     st.session_state.chosen_id = st.selectbox('', ('ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+TechSensing', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
 with col2:
     st.button('Reset Chat', on_click=reset_conversation,args=[st.session_state.chosen_id], key = 'reset1')
-
 
 if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
     if st.session_state.chosen_id == 'ChatGPT 3.5':
@@ -347,13 +343,18 @@ with st.sidebar.expander("WEB PAGE"):
     btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage")  
 
 if st.session_state.chosen_id == "ChatGPT 3.5":
+    annotated_text(
+        "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
+        "", annotation("Google search", "Function",  font_size="0.7rem"),
+    )
+    
     col1_chat1, col2_chat1 = st.columns([6, 2])
     with col1_chat1.container(height=650, border= False):
         message_hist_display(st.session_state.messages1)
         if st.session_state.messages1[-1]["role"] == "user":
             with st.chat_message("assistant", avatar = './src/chatbot.png'):
                 with st.spinner("Thinking..."):
-                    prompt_ = convert_message(st.session_state.messages1)
+                    prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages1]
                     response = st.session_state.llm.chat(prompt_) #결과                                            
                     chat_box(response.message.content)
                     message = {"role": "assistant", "content": response.message.content} #저장
@@ -373,14 +374,19 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
                 st.write(f'''{i}<br>''',unsafe_allow_html=True)
         else:
             pass
-
+            
 if st.session_state.chosen_id == "ChatGPT 4":
+    annotated_text(
+        "", annotation("ChatGPT4", "Function", font_size="0.7rem"),
+        "", annotation("Google search", "Function",  font_size="0.7rem"),
+    )
+
     with st.container(height=650, border= False):
         message_hist_display(st.session_state.messages2)
         if st.session_state.messages2[-1]["role"] == "user":
             with st.chat_message("assistant", avatar = './src/chatbot.png'):
                 with st.spinner("Thinking..."):
-                    prompt_ = convert_message(st.session_state.messages2)
+                    prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages2]
                     response = st.session_state.llm4.chat(prompt_) #결과                    
                     chat_box(response.message.content )                        
                     message = {"role": "assistant", "content": response.message.content} #저장
@@ -393,6 +399,24 @@ if st.session_state.chosen_id == "ChatGPT 4":
                     chat_box(res)         
         
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
+    annotated_text(
+        "", annotation("Justia.com", "Patents", font_size="0.7rem"),
+        "", annotation("Google-patent.com", "Patents",  font_size="0.7rem"),
+        "", annotation("Reddit.com", "SNS",  font_size="0.7rem"),
+        "", annotation("Paperswithcode.com", "IT Papers", font_size="0.7rem"),
+        "", annotation("Nature.com", "Chemistry paper",  font_size="0.7rem"),
+        "", annotation("Ercot.com", "Policies",  font_size="0.7rem"),
+        "", annotation("cpuc.ca.gov", "Policies",  font_size="0.7rem"),        
+        "", annotation("Pv-magazine.com", "News",  font_size="0.7rem"),        
+        
+    )
+    annotated_text(
+        "", annotation("PDF", "Function", font_size="0.7rem"),
+        "", annotation("PPTX", "Function",  font_size="0.7rem"),
+        "", annotation("YOUTUBE", "Function",  font_size="0.7rem"),
+        "", annotation("HTML", "Function",  font_size="0.7rem"),        
+    )
+
     with st.container(height=650, border= False):
         message_hist_display(st.session_state.messages3)
         if st.session_state.messages3[-1]["role"] == "user":
@@ -409,6 +433,14 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
                     st.session_state.messages3.append(message) # Add response to message history        
     
 if st.session_state.chosen_id == "ChatGPT+MyData":
+    keys = [list(d.keys())[0] for d in st.session_state.display_datasource]
+    key_counts = Counter(keys)    
+    annotated_text(
+        "", annotation("PDF", str(key_counts['pdf']), font_size="0.7rem"),
+        "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
+        "", annotation("WEB", str(key_counts['web']),  font_size="0.7rem"),
+    )
+    
     col1_mychat, col2_mychat = st.columns([3, 2])
     with col1_mychat.container(height=650, border= False):
         message_hist_display(st.session_state.messages4)
@@ -435,6 +467,7 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
     with col2_mychat.container(height=650, border= False):
         if len(st.session_state.display_datasource) > 0:
             display_customized_data(st.session_state.display_datasource)
+            
 
 
 

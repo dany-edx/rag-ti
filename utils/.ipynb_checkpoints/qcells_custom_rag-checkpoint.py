@@ -147,18 +147,18 @@ class create_db_chat(BaseToolSpec):
                 self.retriever_engine = self.index_node.as_retriever()
                 self.query_engine = self.index_node.as_query_engine()
                 self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="web_html_" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                                                                            name="web_page_html_" + idx,
+                                                                            description="Please answer questions about the web page content of the {}".format(doc[0].metadata['title'])))
                 self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="web_html" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title']))))     
+                                                               metadata=ToolMetadata(name="web_page_html_" + idx,
+                                                                            description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
             else:
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
                 self.retriever_engine = self.index_node.as_retriever()
                 self.query_engine = self.index_node.as_query_engine()
                 self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="youtube_transcript_" + idx,
+                                                                            name="youtube_" + idx,
                                                                             description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
             
@@ -180,7 +180,7 @@ class create_db_chat(BaseToolSpec):
     
     def multi_index_retriever_documents(self, query:str):
         """
-        Answer multi indexing query about extracted documents.
+        Answer a common question about extracted documents.
         Return retrieved texts.
 
         Args:
@@ -190,11 +190,6 @@ class create_db_chat(BaseToolSpec):
             query_engine_tools= self.query_engine_tools,
             service_context= self.service_context,
             use_async=True,
-        )           
-        
-        # retriever = RouterRetriever(
-        #     selector=PydanticMultiSelector.from_defaults(llm=self.llm),
-        #     llm = self.llm, 
-        #     retriever_tools=self.query_engine_tools)
+        )                   
         res = sub_query_agent.query(query)
         return [i.text for i in res.source_nodes]

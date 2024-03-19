@@ -465,7 +465,7 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
     
     def google_patent_search(self, query:str):    
         """
-        Search into google patent web for specific topic's patent names and ids.
+        Search into google patent for specific topic's patent names and ids.
         Return patent pdf, url link, title as json type.
     
         Args:
