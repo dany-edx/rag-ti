@@ -39,6 +39,8 @@ import time
 import praw
 from datetime import datetime
 from llama_index.agent.openai import OpenAIAgent
+import chromedriver_autoinstaller
+chromedriver_autoinstaller.install()
 
 class global_obj(object):
     chrome_options = Options()
@@ -287,6 +289,82 @@ class CaliforniaUtilityCommisionSearchToolSepc(DocumentDrillDownAnalyzeToolSpec,
             text_list.append([a_tags[0].text, div.text, a_tags[0].attrs['href']])
         result_dict_list = [{'title': item[0], 'abstract': item[1], 'url': item[2]} for item in text_list]
         return result_dict_list[:5]
+
+class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
+    """Texas States Energy market, policy, trend and regulation search tool spec."""
+    # spec_functions = ['texas_information_search']
+    def texas_information_search(self, query):
+        """
+        Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
+        regulations, resources, and tools for market participants, and information on events and education programs.
+
+        Return title, url and abstract as json.
+        Args:
+            query (str): searchable words when search dissertation (limited 4 words)
+        """    
+        url= 'https://www.ercot.com/search?q={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        
+        title = []
+        url = []
+        abstract = []
+        div_tags = soup.find_all('div', id = 'search-results')
+        for a in div_tags[0].find_all(['div','a']):
+            if 'href' in a.attrs:
+                if 'www.ercot.com' in a.attrs['href']:
+                    url.append(a.attrs['href'])    
+                else:
+                    url.append('https://www.ercot.com' + a.attrs['href'])
+                title.append(a.text)
+            if 'class' in a.attrs:
+                if 'my-2' in a['class']:
+                    abstract.append(a.text)
+        content = []
+        for t, u, a in zip(title, url, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
+
+class TexasUtilityCommissionSearchToolSpec(BaseToolSpec):
+    """Texas public solar energy utility commission forum"""
+    # spec_functions = ['texas_utility_commission_search']
+    def texas_utility_commission_search(self, query):
+        """
+        Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
+        regulations, resources, and tools for market participants, and information on events and education programs.
+
+        Return title, url and abstract as json.
+        Args:
+            query (str): searchable words when search dissertation (limited 4 words)
+        """
+        title = []
+        urls = []
+        abstract = []
+        url= 'https://www.puc.texas.gov/agency/sitesearch.aspx?q={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        
+        divs = soup.find_all('div', {'class':'gsc-webResult gsc-result'})
+        for d in divs:
+            a_tags = d.find_all('a')[0]
+            title.append(a_tags.text)
+            urls.append(a_tags.attrs['href'])
+            d_tag = d.find_all('div', {'class' : 'gs-bidi-start-align gs-snippet'})[0]
+            abstract.append(d_tag.text)
+        
+        content = []
+        for t, u, a in zip(title, url, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
         
 class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """Jistia Web Patent random search tool spec."""
@@ -351,7 +429,41 @@ class RedditMarketingSearchToolSpec(BaseToolSpec):
         result_dict_list = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
         return result_dict_list
 
-
+class AWSCloudManualSearchToolSpec(BaseToolSpec):
+    # spec_functions = ['aws_cloud_manaul']
+    """AWS cloud serivce manual search tool spec."""
+    def aws_cloud_manaul(self, query:str):
+        """
+        Search AWS manaul search. 
+        Return manual title, url, abstract as json.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        url= 'https://aws.amazon.com/ko/search/?searchQuery=database+migration#facet_type=documentation&page=1'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url)
+        time.sleep(3)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        div_tags = soup.find_all('li', {'class':'item documentation clearfix'})
+        
+        title = []
+        urls = []
+        abstract = []
+        
+        for d in div_tags:
+            title.append(d.find_all('a')[0].text)
+            urls.append(d.find_all('a')[0].attrs['href'])
+            abstract.append(d.find_all('div', {'class':'lb-item-desc'})[0].text)
+        
+        content = []
+        for t, u, a in zip(title, urls, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
+        
 class ComputerSciencePaperSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """computer science related paper search tool spec."""
     def computer_science_paper_search(self, query:str, is_more=False):
@@ -504,47 +616,8 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         driver.quit()
         return result_dict_list[:3]
 
-class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
-    """Texas States Energy market, policy, trend and regulation search tool spec."""
-    # spec_functions = ['texas_information_search']
-    def texas_information_search(self, query):
-        """
-        Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
-        regulations, resources, and tools for market participants, and information on events and education programs.
 
-        Return title, url and abstract as json.
-        Args:
-            query (str): searchable words when search dissertation (limited 4 words)
-        """    
-        url= 'https://www.ercot.com/search?q={}'.format(query.replace(' ','+'))
-        driver = webdriver.Chrome(options=global_obj.chrome_options)
-        driver.delete_all_cookies()
-        driver.get(url) 
-        time.sleep(5)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        driver.quit()
-        
-        title = []
-        url = []
-        abstract = []
-        div_tags = soup.find_all('div', id = 'search-results')
-        for a in div_tags[0].find_all(['div','a']):
-            if 'href' in a.attrs:
-                if 'www.ercot.com' in a.attrs['href']:
-                    url.append(a.attrs['href'])    
-                else:
-                    url.append('https://www.ercot.com' + a.attrs['href'])
-                title.append(a.text)
-            if 'class' in a.attrs:
-                if 'my-2' in a['class']:
-                    abstract.append(a.text)
-        content = []
-        for t, u, a in zip(title, url, abstract):
-            content.append([t, u, a])
-        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
-        return result_dict_list[:5]
-        
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc):
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec):
     """Google random search tool spec."""
     spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
     def get_instinct_search_url(self, query):
@@ -629,7 +702,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search"]
+    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul']
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context

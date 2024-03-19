@@ -35,11 +35,14 @@ import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
-from streamlit_option_menu import option_menu
 from annotated_text import *
+from annotated_text import *
+from htbuilder.units import unit
 from collections import Counter
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
+rem = unit.rem
+parameters.LABEL_FONT_SIZE=rem(0.6)
 
 class global_obj(object):
     chrome_options = Options()
@@ -400,21 +403,23 @@ if st.session_state.chosen_id == "ChatGPT 4":
         
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
     annotated_text(
-        "", annotation("Justia.com", "Patents", font_size="0.7rem"),
-        "", annotation("Google-patent.com", "Patents",  font_size="0.7rem"),
-        "", annotation("Reddit.com", "SNS",  font_size="0.7rem"),
-        "", annotation("Paperswithcode.com", "IT Papers", font_size="0.7rem"),
-        "", annotation("Nature.com", "Chemistry paper",  font_size="0.7rem"),
-        "", annotation("Ercot.com", "Policies",  font_size="0.7rem"),
-        "", annotation("cpuc.ca.gov", "Policies",  font_size="0.7rem"),        
-        "", annotation("Pv-magazine.com", "News",  font_size="0.7rem"),        
+        "", annotation("Justia.com", "Patents", font_size="0.6rem"),
+        "", annotation("Google.patent.com", "Patents",  font_size="0.6rem"),
+        "", annotation("Reddit.com", "SNS",  font_size="0.6rem"),
+        "", annotation("Paperswithcode.com", "IT Papers", font_size="0.6rem"),
+        "", annotation("Nature.com", "Chemistry paper",  font_size="0.6rem"),
+        "", annotation("Ercot.com", "Market",  font_size="0.6rem"),
+        "", annotation("cpuc.ca.gov", "Commission",  font_size="0.6rem"),
+        "", annotation("puc.texas.gov", "Commission",  font_size="0.6rem"),
+        "", annotation("aws.amazon.com", "Manual",  font_size="0.6rem"),
+        "", annotation("Pv-magazine.com", "News",  font_size="0.6rem"),        
         
     )
     annotated_text(
-        "", annotation("PDF", "Function", font_size="0.7rem"),
-        "", annotation("PPTX", "Function",  font_size="0.7rem"),
-        "", annotation("YOUTUBE", "Function",  font_size="0.7rem"),
-        "", annotation("HTML", "Function",  font_size="0.7rem"),        
+        "", annotation("PDF", "Function", font_size="0.6rem"),
+        "", annotation("PPTX", "Function",  font_size="0.6rem"),
+        "", annotation("YOUTUBE", "Function",  font_size="0.6rem"),
+        "", annotation("HTML", "Function",  font_size="0.6rem"),        
     )
 
     with st.container(height=650, border= False):

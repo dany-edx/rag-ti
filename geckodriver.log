@@ -1,0 +1,10 @@
+1710871766353	geckodriver	INFO	Listening on 127.0.0.1:37903
+1710871766363	mozrunner::runner	INFO	Running command: MOZ_CRASHREPORTER="1" MOZ_CRASHREPORTER_NO_REPORT="1" MOZ_CRASHREPORTER_SHUTDOWN="1" MOZ_NO_REMOTE="1" "/usr ... te" "--remote-debugging-port" "43821" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofileJTiPEX"
+No protocol specified
+Unable to init server: Could not connect: Connection refused
+Error: cannot open display: :10.0
+1710872103484	geckodriver	INFO	Listening on 127.0.0.1:52395
+1710872103492	mozrunner::runner	INFO	Running command: MOZ_CRASHREPORTER="1" MOZ_CRASHREPORTER_NO_REPORT="1" MOZ_CRASHREPORTER_SHUTDOWN="1" MOZ_NO_REMOTE="1" "/usr ... te" "--remote-debugging-port" "34923" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofilebTuVOr"
+No protocol specified
+Unable to init server: Could not connect: Connection refused
+Error: cannot open display: :10.0
