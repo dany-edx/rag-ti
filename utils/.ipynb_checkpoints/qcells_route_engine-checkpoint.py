@@ -264,7 +264,7 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
 class CaliforniaUtilityCommisionSearchToolSepc(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     # spec_functions = ['commission_search']
     """California public solar energy utility commission forum"""
-    def commission_search(self, query:str):
+    def california_utility_commission_search(self, query:str):
         """
         Search California energy commision forum for policies, commissions and regulations.
         Return title, abstract and url as json.
@@ -544,7 +544,7 @@ class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
         result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         return result_dict_list[:5]
         
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec):
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc):
     """Google random search tool spec."""
     spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
     def get_instinct_search_url(self, query):
@@ -629,7 +629,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search"]
+    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context
