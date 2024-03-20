@@ -101,7 +101,6 @@ class map_reduced_summary():
             "Please provide summary with key point in English within 50 characters or fewer.\n"
             "Summary: ")
         self.response_synthesizer = get_response_synthesizer(text_qa_template=map_template, llm = self.llm, response_mode="accumulate", output_cls = Text_summary)
-        
         documents = Document(text=text)
         index = SummaryIndex.from_documents([documents], service_context = self.service_context, transformations=[self.splitter])
         query_engine = index.as_query_engine(response_synthesizer=self.response_synthesizer, use_async=True, verbose = True)

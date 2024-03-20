@@ -39,6 +39,9 @@ import time
 import praw
 from datetime import datetime
 from llama_index.agent.openai import OpenAIAgent
+from qcells_custom_rag import get_youtube_metadata, get_timeline
+from youtube_transcript_api import YouTubeTranscriptApi
+from llama_index.core import PromptTemplate
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
 
@@ -98,6 +101,20 @@ def remove_duplicate_newlines(input_text):
     result_text = re.sub(pattern, '\n', input_text)
     return result_text.strip()  # 앞뒤 공백 제거
 
+def translator(llm, other_lang): 
+    template = (
+        "You are an AI agent to translate other language into English."
+        "Translate into English, if the given text is not written in English."
+        "Return just tranlated word"
+        "\n---------------------\n"
+        "the given text: {query}"
+    )
+    qa_template = PromptTemplate(template)
+    prompt = qa_template.format(query = other_lang)
+    prompt = [ChatMessage(role='user', content=prompt)]
+    translated = llm.chat(prompt)
+    return translated.message.content
+
 class HybridRetriever(BaseRetriever):
     def __init__(self, vector_retriever, bm25_retriever):
         self.vector_retriever = vector_retriever
@@ -135,9 +152,32 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
             query = 'summarize. limited 1000-words.'
         r=requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
-        
-        
-        if 'https://patents.justia.com' in url:
+
+        if '.pdf' in url:
+            print('PDF URL Parsing')
+            if self.url != url:
+                loader = PyPDFLoader(url)
+                documents = loader.load_and_split()
+                text_list = ' '.join([i.page_content for i in documents])
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]
+
+        elif '.pptx' in url:
+            if self.url != url:
+                response = requests.get(url)
+                pptx_data = BytesIO(response.content)
+                presentation = Presentation(pptx_data)
+                text_list = ""
+                for i, slide in enumerate(presentation.slides):
+                    text_list += f"\n\nSlide #{i}: \n"
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text_list += f"{shape.text}\n" 
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]
+        elif 'https://patents.justia.com' in url:
             if self.url != url:
                 text_list = []
                 for a_tag in soup.find_all('p'):
@@ -147,15 +187,18 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
 
-        if 'https://www.cpuc.ca.gov' in url:
-            if self.url != url:
-                text_list = []
-                for a_tag in soup.find_all('p'):
-                    text_list.append(a_tag.text)
-                text_list = ''.join(text_list)
-                self.hybrid_retriever = self.documentize(text_list, url)
-            result = self.hybrid_retriever.retrieve(query)
-            result = [i.text for i in result]
+        elif 'https://www.cpuc.ca.gov' in url:
+            try:
+                if self.url != url:
+                    text_list = []
+                    for a_tag in soup.find_all('p'):
+                        text_list.append(a_tag.text)
+                    text_list = ''.join(text_list)
+                    self.hybrid_retriever = self.documentize(text_list, url)
+                result = self.hybrid_retriever.retrieve(query)
+                result = [i.text for i in result]
+            except:
+                pass
 
         elif 'https://paperswithcode.com' in url:
             href_list = []
@@ -196,30 +239,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
 
-        elif '.pdf' in url:
-            if self.url != url:
-                loader = PyPDFLoader(url)
-                documents = loader.load_and_split()
-                text_list = ' '.join([i.page_content for i in documents])
-                self.hybrid_retriever = self.documentize(text_list, url)
-            result = self.hybrid_retriever.retrieve(query)
-            result = [i.text for i in result]
-
-        elif '.pptx' in url:
-            if self.url != url:
-                response = requests.get(url)
-                pptx_data = BytesIO(response.content)
-                presentation = Presentation(pptx_data)
-                text_list = ""
-                for i, slide in enumerate(presentation.slides):
-                    text_list += f"\n\nSlide #{i}: \n"
-                    for shape in slide.shapes:
-                        if hasattr(shape, "text"):
-                            text_list += f"{shape.text}\n" 
-                self.hybrid_retriever = self.documentize(text_list, url)
-            result = self.hybrid_retriever.retrieve(query)
-            result = [i.text for i in result]
-            
         elif 'www.reddit.com' in url:
             if self.url != url:
                 reddit = praw.Reddit(client_id='GIbgvR6hff64rcsIHihC3g',
@@ -237,6 +256,28 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                         pass
                 content.append([submission.title, submission.url,submission.selftext, comments[:3]])
                 result = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
+        elif 'www.youtube.com' in url:
+            if self.url != url:
+                meta_data = get_youtube_metadata(url)
+                data = YouTubeTranscriptApi.get_transcript(url.split('v=')[-1])
+                documents = []
+                for i in data:
+                    i['div'] = int(i['start'] / 60)  
+                text_list= []
+                distinct_div = set(item['div'] for item in data)
+                for idx, d in enumerate(distinct_div):
+                    texts = []
+                    k = [i for i in data if i['div'] == d]
+                    start_time_min = min([i['start'] for i in k])
+                    start_time_max = max([i['start'] for i in k])
+                    text_div = [i['text'] for i in k]
+                    texts.append('[youtube play time] {}\n'.format(get_timeline(start_time_min)) + ' '.join(text_div))
+                    texts = '\n'.join(texts)
+                    text_list.append(texts)            
+                text_list = '\n'.join(text_list)
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]
         else:
             if self.url != url:
                 text_list = []
@@ -274,6 +315,7 @@ class CaliforniaUtilityCommisionSearchToolSepc(DocumentDrillDownAnalyzeToolSpec,
         Args:
             query (str): searchable words on google (limited 4 words)
         """
+        query = translator(self.llm, query)
         url = 'https://www.cpuc.ca.gov/search#q={}&sort=relevancy'.format(query)
         driver = webdriver.Chrome( options=global_obj.chrome_options)
         driver.delete_all_cookies()
@@ -290,9 +332,45 @@ class CaliforniaUtilityCommisionSearchToolSepc(DocumentDrillDownAnalyzeToolSpec,
         result_dict_list = [{'title': item[0], 'abstract': item[1], 'url': item[2]} for item in text_list]
         return result_dict_list[:5]
 
+class CaliforniaEnergyMarketSearchToolSpec(BaseToolSpec):
+    """California States Energy grid market, policy, trend and regulation search tool spec."""
+    def california_information_search(self, query):
+        """
+        Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
+        regulations, resources, and tools for market participants, and information on events and education programs.
+
+        Return title, url and abstract as json.
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """    
+        query = translator(self.llm, query)
+        url= 'https://www.caiso.com/search/Pages/WWW-Not-Archived-Results.aspx?k={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        
+        title = []
+        urls = []
+        abstract = []
+        main_div = soup.find_all('div', {'class':'ms-srch-group-content'})
+        div_tags = main_div[0].find_all('div', {'name' : 'Item'})
+        for i in div_tags:
+            a_tag = i.find_all('a')[0]
+            urls.append(a_tag.attrs['href'].split('#')[0])
+            title.append(a_tag.text)
+            abstract.append(i.find_all('div', {'ms-srch-item-summary'})[0].text)
+        
+        content = []
+        for t, u, a in zip(title, urls, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
+        
 class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
-    """Texas States Energy market, policy, trend and regulation search tool spec."""
-    # spec_functions = ['texas_information_search']
+    """Texas States Energy grid market, policy, trend and regulation search tool spec."""
     def texas_information_search(self, query):
         """
         Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
@@ -300,8 +378,9 @@ class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
 
         Return title, url and abstract as json.
         Args:
-            query (str): searchable words when search dissertation (limited 4 words)
+            query (str): searchable words on google (limited 4 words)
         """    
+        query = translator(self.llm, query)
         url= 'https://www.ercot.com/search?q={}'.format(query.replace(' ','+'))
         driver = webdriver.Chrome(options=global_obj.chrome_options)
         driver.delete_all_cookies()
@@ -311,28 +390,27 @@ class TexasEnergyMarketSearchToolSpec(BaseToolSpec):
         driver.quit()
         
         title = []
-        url = []
+        urls = []
         abstract = []
         div_tags = soup.find_all('div', id = 'search-results')
         for a in div_tags[0].find_all(['div','a']):
             if 'href' in a.attrs:
                 if 'www.ercot.com' in a.attrs['href']:
-                    url.append(a.attrs['href'])    
+                    urls.append(a.attrs['href'])    
                 else:
-                    url.append('https://www.ercot.com' + a.attrs['href'])
+                    urls.append('https://www.ercot.com' + a.attrs['href'])
                 title.append(a.text)
             if 'class' in a.attrs:
                 if 'my-2' in a['class']:
                     abstract.append(a.text)
         content = []
-        for t, u, a in zip(title, url, abstract):
+        for t, u, a in zip(title, urls, abstract):
             content.append([t, u, a])
         result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         return result_dict_list[:5]
 
 class TexasUtilityCommissionSearchToolSpec(BaseToolSpec):
     """Texas public solar energy utility commission forum"""
-    # spec_functions = ['texas_utility_commission_search']
     def texas_utility_commission_search(self, query):
         """
         Answer about real-time power data including generation, consumption, and prices, market reports for trend analysis, operational notices for grid management, 
@@ -342,16 +420,16 @@ class TexasUtilityCommissionSearchToolSpec(BaseToolSpec):
         Args:
             query (str): searchable words when search dissertation (limited 4 words)
         """
-        title = []
-        urls = []
-        abstract = []
+        query = translator(self.llm, query)
         url= 'https://www.puc.texas.gov/agency/sitesearch.aspx?q={}'.format(query.replace(' ','+'))
         driver = webdriver.Chrome(options=global_obj.chrome_options)
         driver.delete_all_cookies()
         driver.get(url) 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         driver.quit()
-        
+        title = []
+        urls = []
+        abstract = []        
         divs = soup.find_all('div', {'class':'gsc-webResult gsc-result'})
         for d in divs:
             a_tags = d.find_all('a')[0]
@@ -366,40 +444,8 @@ class TexasUtilityCommissionSearchToolSpec(BaseToolSpec):
         result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         return result_dict_list[:5]
         
-class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
-    """Jistia Web Patent random search tool spec."""
-    def justia_patent_search(self, query):
-        """
-        Search into justia web for specific topic's patent url, abstract and title.
-        Return patent url, abstract, title as json type.
-        
-        Args:
-            query (str): searchable words on google (limited 4 words)
-        """
-
-        url= 'https://patents.justia.com/search?q={}'.format(query.replace(' ','+'))
-        r=requests.get(url)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        
-        href_list = []
-        title_list = []
-        abstract_list = []
-        
-        for i, div_tag in enumerate(soup.find_all('div', attrs = {'class':['head','abstract']})):
-            if 'abstract' in div_tag.attrs['class']:
-                abstract_list.append(div_tag.text)
-            
-            for a_tag in div_tag.find_all('a'):
-                if 'href' in a_tag.attrs:
-                    if '/patent/' in a_tag['href']:
-                        href_list.append('https://patents.justia.com' + a_tag['href'])
-                        title_list.append(a_tag.text)
-        merge_list = list(zip(href_list, title_list, abstract_list))
-        result_list_of_dicts = [{'Url': item[0].replace('Link: ', ''), 'Title': item[1], 'Abstract': item[2]} for item in merge_list]                    
-        return result_list_of_dicts[:3]
 
 class RedditMarketingSearchToolSpec(BaseToolSpec):
-    # spec_functions = ['reddit_post_search']
     """SNS Reddit marketing search tool spec."""
     def reddit_post_search(self, query:str):
         """
@@ -409,7 +455,7 @@ class RedditMarketingSearchToolSpec(BaseToolSpec):
         Args:
             query (str): searchable words on google (limited 4 words)
         """
-
+        query = translator(self.llm, query)
         reddit = praw.Reddit(client_id='GIbgvR6hff64rcsIHihC3g',
                              client_secret='2yora5MRJLBsGLfGxj_5ooDRCf68Kw',
                              user_agent='my_apps/1.0')
@@ -425,12 +471,49 @@ class RedditMarketingSearchToolSpec(BaseToolSpec):
                     comments.append("comment{} : {}".format(i, comment.body))    
                 except:
                     pass
-            content.append([submission.title, submission.url,submission.selftext, comments[:5]])
+            content.append([submission.title, submission.url,submission.selftext[:2000], comments[:2]])
         result_dict_list = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
-        return result_dict_list
+        return result_dict_list[:4]
 
+
+class AzureCloudManualSearchToolSpec(BaseToolSpec):
+    """Azure microsoft cloud serivce manual search tool spec."""
+    def azure_cloud_manaul(self, query:str):
+        """
+        Search Azure manaul search. 
+        Return manual title, url, abstract as json.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        query = translator(self.llm, query)
+        url= 'https://learn.microsoft.com/en-us/search/?terms={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url)
+        time.sleep(3)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        
+        title = []
+        urls = []
+        abstract = []
+        
+        div_tags = soup.find_all('li', {'class':'margin-top-sm'})
+        for d in div_tags:
+            a_tag = d.find_all('a')
+            p_tag = d.find_all('p')
+        
+            urls.append(a_tag[0].attrs['href'])
+            title.append(a_tag[0].text.strip())
+            abstract.append(p_tag[0].text)
+        content = []
+        for t, u, a in zip(title, urls, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
+        return result_dict_list[:5]
+        
 class AWSCloudManualSearchToolSpec(BaseToolSpec):
-    # spec_functions = ['aws_cloud_manaul']
     """AWS cloud serivce manual search tool spec."""
     def aws_cloud_manaul(self, query:str):
         """
@@ -440,7 +523,8 @@ class AWSCloudManualSearchToolSpec(BaseToolSpec):
         Args:
             query (str): searchable words on google (limited 4 words)
         """
-        url= 'https://aws.amazon.com/ko/search/?searchQuery=database+migration#facet_type=documentation&page=1'.format(query.replace(' ','+'))
+        query = translator(self.llm, query)
+        url= 'https://aws.amazon.com/ko/search/?searchQuery={}#facet_type=documentation&page=1'.format(query.replace(' ','+'))
         driver = webdriver.Chrome(options=global_obj.chrome_options)
         driver.delete_all_cookies()
         driver.get(url)
@@ -475,36 +559,48 @@ class ComputerSciencePaperSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseT
             query (str): searchable words when search dissertation (limited 4 words)
             is_more [Optional] (bool): Count up when the user fetch more data about the same topic or query.  
         """
+        query = translator(self.llm, query)
         url = 'https://paperswithcode.com/search?q_meta=&q_type=&q={}'.format(query.replace(' ', '+'))
         self.driver = webdriver.Chrome(options=global_obj.chrome_options)
         self.driver.get(url) 
-        if is_more == False:
-            self.prev_len = 0
-            self.is_more_cnt = 0
-        else:
-            self.is_more_cnt = self.is_more_cnt + 1
+        # if is_more == False:
+        #     self.prev_len = 0
+        #     self.is_more_cnt = 0
+        # else:
+        #     self.is_more_cnt = self.is_more_cnt + 1
 
-        for i in range(self.is_more_cnt):
-            if self.prev_len > 0:
-                new_height = self.driver.execute_script('return document.body.scrollHeight')
-                self.driver.execute_script("window.scrollTo(0, {})".format(new_height))
-                time.sleep(5)
-        
+        # for i in range(self.is_more_cnt):
+        #     if self.prev_len > 0:
+        #         new_height = self.driver.execute_script('return document.body.scrollHeight')
+        #         self.driver.execute_script("window.scrollTo(0, {})".format(new_height))
+        #         time.sleep(5)
+        time.sleep(2)
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-        href_list = []
-        text_list = []
-        for a_tag in soup.find_all('a'):
-            if 'href' in a_tag.attrs:
-                if '/paper/' in a_tag['href']:
-                    if '#' not in a_tag['href']:
-                        if a_tag.text.strip() != '':
-                            href_list.append(['https://paperswithcode.com' + a_tag['href'], a_tag.text.strip()])
+        title = []
+        urls = []
+        abstract = []
+        div_tags = soup.find_all('div', {'class':'col-lg-9 item-content'})
+        for d in div_tags:
+            a_tag = d.find_all('a')
+            p_tag = d.find_all('p', {'class' : 'item-strip-abstract'})
+            for a,p in zip(a_tag, p_tag):
+                if 'href' in a.attrs:
+                    if '/paper/' in a.attrs['href']:
+                        if '#' not in a.attrs['href']:
+                            urls.append('https://paperswithcode.com' + a.attrs['href'])
+                            title.append(a.text)
+                abstract.append(p.text)
+        content = []
+        for t, u, a in zip(title, urls, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         
-        href_list = href_list[self.prev_len:]
-        self.prev_len = self.prev_len + len(href_list)        
+                
+        # href_list = href_list[self.prev_len:]
+        # self.prev_len = self.prev_len + len(href_list)        
 
-        href_list = self.removal_duplicates(href_list)
-        result_dict_list = [{'paper_url': item[0], 'paper_name': item[1]} for item in href_list]                                
+        # href_list = self.removal_duplicates(href_list)
+        # result_dict_list = [{'paper_url': item[0], 'paper_name': item[1]} for item in href_list]                                
         self.driver.quit()
 
         return result_dict_list[:5]
@@ -524,7 +620,6 @@ class ComputerSciencePaperSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseT
         
 class ChemistryEngineeringJournalSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """Journal random search tool spec."""
-    
     def scholar_paper_search(self, query):
         """
         Search for general topic's academical paper names and ids.
@@ -533,7 +628,7 @@ class ChemistryEngineeringJournalSearchToolSpec(DocumentDrillDownAnalyzeToolSpec
         Args:
             query (str): searchable words on google (limited 4 words)
         """
-        
+        query = translator(self.llm, query)
         url= 'https://scholar.google.com/scholar?as_sdt=2007&q={}&hl=en&as_ylo=2024'.format(query.replace(' ','+'))
         r=requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -558,7 +653,7 @@ class ChemistryEngineeringJournalSearchToolSpec(DocumentDrillDownAnalyzeToolSpec
         Args:
             query (str): searchable words on google(limited 4 words).
         """
-        
+        query = translator(self.llm, query)
         url= 'https://www.nature.com/search?q={}&date_range=last_year&order=relevance'.format(query.replace(' ','+'))
         r=requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -571,18 +666,51 @@ class ChemistryEngineeringJournalSearchToolSpec(DocumentDrillDownAnalyzeToolSpec
         result_list_of_dicts = [{'url': item[0].replace('Link: ', ''), 'Title': item[1]} for item in href_list]
         return result_list_of_dicts[:5]
     
+class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
+    """Jistia Web Patent random search tool spec."""
+    def justia_patent_search(self, query):
+        """
+        Search patents on justia web for specific topic's patent url, abstract and title.
+        Please if there no result, go to Google patent search. 
+        
+        Return patent url, abstract, title as json type.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        query = translator(self.llm, query)
+        url= 'https://patents.justia.com/search?q={}'.format(query.replace(' ','+'))
+        r=requests.get(url)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        
+        href_list = []
+        title_list = []
+        abstract_list = []
+        
+        for i, div_tag in enumerate(soup.find_all('div', attrs = {'class':['head','abstract']})):
+            if 'abstract' in div_tag.attrs['class']:
+                abstract_list.append(div_tag.text)
+            
+            for a_tag in div_tag.find_all('a'):
+                if 'href' in a_tag.attrs:
+                    if '/patent/' in a_tag['href']:
+                        href_list.append('https://patents.justia.com' + a_tag['href'])
+                        title_list.append(a_tag.text)
+        merge_list = list(zip(href_list, title_list, abstract_list))
+        result_list_of_dicts = [{'Url': item[0].replace('Link: ', ''), 'Title': item[1], 'Abstract': item[2]} for item in merge_list]                    
+        return result_list_of_dicts[:3]
 
 class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
     """Google Web patent random search second tool spec."""
-    
     def google_patent_search(self, query:str):    
         """
-        Search into google patent for specific topic's patent names and ids.
+        Search patents on google patent web for specific topic's patent names and ids.
         Return patent pdf, url link, title as json type.
     
         Args:
             query (str): searchable words on google (limited 4 words)
         """    
+        query = translator(self.llm, query)
         url = 'https://patents.google.com/?q=({})'.format(query.replace(' ','+'))
         driver = webdriver.Chrome( options=global_obj.chrome_options)
         driver.delete_all_cookies()
@@ -607,9 +735,7 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
                 if 'id' in s.attrs:
                     if s['id'] == 'htmlContent':
                         texts.append(s.text)
-            
             texts = ''.join(texts)
-        
             href_list.append([url, id_name, texts])
         result_dict_list = [{'pdf': item[0], 'url': item[1], 'title': item[2]} for item in href_list]                            
         driver.delete_all_cookies()
@@ -617,7 +743,7 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         return result_dict_list[:3]
 
 
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec):
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec, AzureCloudManualSearchToolSpec, CaliforniaEnergyMarketSearchToolSpec):
     """Google random search tool spec."""
     spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
     def get_instinct_search_url(self, query):
@@ -702,7 +828,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
 
 
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url", "google_patent_search",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul']
+    spec_functions = ["vector_database_search", "google_patent_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul', 'azure_cloud_manaul', "california_information_search"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context
@@ -791,6 +917,7 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
             service_context=self.service_context,
             use_async=True,
         )   
+        query = translator(self.llm, query)
         res = self.news_agent.query(query)
         return res
 

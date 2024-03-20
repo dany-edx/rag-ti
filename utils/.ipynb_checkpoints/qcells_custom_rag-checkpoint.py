@@ -21,12 +21,13 @@ from pptx import Presentation
 import fitz
 from pytube import Channel,YouTube #키워드 -> url
 from llama_index.core.tools import RetrieverTool
+from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.core.selectors import (
     PydanticMultiSelector,
     PydanticSingleSelector,
 )
 from llama_index.core.retrievers import RouterRetriever
-
+from llama_index.program.openai import OpenAIPydanticProgram
 
 llm =AzureOpenAI(
             model="gpt-35-turbo",
@@ -43,6 +44,45 @@ embedding = AzureOpenAIEmbedding(
         azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
      api_version="2023-07-01-preview")
 
+
+class GenResult(BaseModel):
+    """
+    Get text data to list
+    return
+        search_task (list): 
+        analyze_task: (list):
+    """
+    search_task: Optional [list]
+    analyze_task: Optional [list]
+    
+def generate_strategy(high_level_query, answers):
+    gen_program = OpenAIPydanticProgram.from_defaults(
+    output_cls=GenResult,
+    llm=llm,
+    verbose=True,
+    prompt_template_str=(
+            "you will be given decomposed tasks and catgorized.\n"
+            "Please make a list by category\n"
+            "{context}"
+        ),
+    )   
+    template = (
+        "You are an tech sensing assistant to make a decision and plan for researching\n"
+        "Please decompse the given query as much as possible you can break down and make tasks list as many as possible to let people know about tech."
+        "Please categorize the decomposed tasks into two categories: data search and analyze."
+        "the each task is limited 5-words and change searchable word on google"
+        "\n---------------------\n"
+        "The high level goal: {high_level_query}\n"
+        "\n---------------------\n"
+        "The previous answers: {answers}\n"
+    )
+    qa_template = PromptTemplate(template)
+    prompt = qa_template.format(high_level_query = high_level_query, answers = answers)
+    prompt = [ChatMessage(role='user', content=prompt)]
+    res_tasks = llm.chat(prompt)    
+    lists = gen_program(query = high_level_query, context = res_tasks.message.content)        
+    return lists.search_task, lists.analyze_task
+    
 def pptx_load_data(file):
     bytes_data = file.getvalue()
     byte_io = io.BytesIO(bytes_data)
