@@ -33,7 +33,8 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
 from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
 from llama_index.postprocessor.cohere_rerank import CohereRerank
-
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core import get_response_synthesizer
 
 llm =AzureOpenAI(
             model="gpt-35-turbo",
@@ -168,8 +169,6 @@ class HybridRetriever(BaseRetriever):
 
 
 mrs = map_reduced_summary(llm = llm, embedding = embedding)
-
-
 class CustomRetriever(BaseRetriever):
     def __init__(self, vector_retriever, postprocessor=None):
         self._vector_retriever = vector_retriever
@@ -209,10 +208,11 @@ tool with the original query. Do NOT use the other tools for any queries involvi
         return tools + [sub_question_tool]
         
 class create_db_chat(BaseToolSpec):
-    spec_functions = ['retriever_documents', 'multi_index_retriever_documents']
+    spec_functions = ['hybrid_retriever_documents']
     
     def __init__(self, _docs, llm, embedding, service_context):
         self.llm = llm
+        self._docs = _docs
         self.embedding = embedding
         self.service_context = service_context
         self.splitter = SentenceSplitter(chunk_size=256,chunk_overlap=25)
@@ -273,9 +273,8 @@ class create_db_chat(BaseToolSpec):
                                                                             description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
             
-            elif doc[0].metadata['resource'] =='youtube': 
-                print(doc)
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
+            elif doc[0].metadata['resource'] =='youtube':      
+                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
                 self.retriever_engine = self.index_node.as_retriever()
                 self.query_engine = self.index_node.as_query_engine()
                 self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
@@ -286,23 +285,43 @@ class create_db_chat(BaseToolSpec):
                                                                metadata=ToolMetadata(name="youtube_" + idx,
                                                                             description="Please answer questions about the youtube content of the {}".format(doc[0].metadata['title']))))     
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
+
+    def __len__(self):
+        return len(self._docs)
             
-    def retriever_documents(self, query:str):
+    def retriever_documents(self):
+        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=2)
+        bm25_retriever = BM25Retriever.from_defaults(index=self.index_node, similarity_top_k=3)
+        vector_retriever = self.index_node.as_retriever(similarity_top_k=3)
+        hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
+        response_synthesizer = get_response_synthesizer(llm = self.llm,)
+        custom_query_engine = RetrieverQueryEngine(
+            retriever=hybrid_retriever,
+            response_synthesizer=response_synthesizer,
+            node_postprocessors=[cohere_rerank],
+        )
+        return custom_query_engine
+
+    def hybrid_retriever_documents(self, query:str):
         """
-        Answer single document query about extracted documents.
+        Answer a common question about extracted documents.
         Return retrieved texts.
 
         Args:
             query (str): question about extracted documents.
-        """
-        query = translator(self.llm, query)
-        retriever = RouterRetriever(
-                                    selector=PydanticMultiSelector.from_defaults(llm=self.llm),
-                                    llm = self.llm, 
-                                    retriever_tools=self.retriever_engine_tools
-                                    )
-        nodes = retriever.retrieve(query)
-        return [i.text for i in nodes]
+        """        
+        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=2)
+        bm25_retriever = BM25Retriever.from_defaults(index=self.index_node, similarity_top_k=3)
+        vector_retriever = self.index_node.as_retriever(similarity_top_k=3)
+        hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
+        response_synthesizer = get_response_synthesizer(llm = self.llm,)
+        custom_query_engine = RetrieverQueryEngine(
+            retriever=hybrid_retriever,
+            response_synthesizer=response_synthesizer,
+            node_postprocessors=[cohere_rerank],
+        )
+        response = custom_query_engine.query(query)
+        return response.response
 
     def multi_index_retriever_documents(self, query:str):
         """
@@ -322,7 +341,7 @@ class create_db_chat(BaseToolSpec):
         return res.response
 
     def multi_retriever(self):
-        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=3)
+        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=5)
         all_tools = self.query_engine_tools
         tool_mapping = SimpleToolNodeMapping.from_objects(all_tools)
         obj_index = ObjectIndex.from_objects(
@@ -331,7 +350,7 @@ class create_db_chat(BaseToolSpec):
             VectorStoreIndex,
             service_context = self.service_context
         )
-        vector_node_retriever = obj_index.as_node_retriever(similarity_top_k=5)
+        vector_node_retriever = obj_index.as_node_retriever(similarity_top_k=10)
         custom_node_retriever = CustomRetriever(vector_node_retriever, cohere_rerank)
         custom_obj_retriever = CustomObjectRetriever(custom_node_retriever, tool_mapping, all_tools, llm=self.llm)        
         top_agent = FnRetrieverOpenAIAgent.from_retriever(

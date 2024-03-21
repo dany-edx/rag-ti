@@ -39,6 +39,7 @@ from annotated_text import *
 from annotated_text import *
 from htbuilder.units import unit
 from collections import Counter
+
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 rem = unit.rem
@@ -150,8 +151,9 @@ def make_data_instance():
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(st.session_state.external_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
-    # st.session_state.chat_engine2 = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
+    st.session_state.chat_engine_react = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
     st.session_state.chat_engine2 = st.session_state.chat_db.multi_retriever()
+    # st.session_state.chat_engine_bm = st.session_state.chat_db.retriever_documents()
     st.session_state.external_docs = []
 
 def message_hist_display(message_history):
@@ -288,8 +290,7 @@ def chat_box(text):
                 "codeblock2",
                 """
                 div {background-color:rgb(0,0,0,0.1); border-radius:10px} 
-                
-                code {font-size:13px;font-family: Arial;}
+                code {font-size:11px;font-family: Arial;}
                 """,):
                 x = st.code(i, language = 'python', line_numbers = True)
         else:
@@ -297,21 +298,21 @@ def chat_box(text):
                 "codeblock",
                 """
                 div {background-color:rgb(0,0,0,0)}
-                code {font-size:13px; font-family: Arial; white-space: pre-wrap !important;}
+                code {font-size:11px; font-family: Arial; white-space: pre-wrap !important;}
                 """,):
                 x = st.code(i, language = 'md')
-                
 st.markdown('''
             <style>
+                html {font-size:13px; font-family: Arial;}
                 img {border-radius: 10px;}
                 div[data-testid="stExpander"]> details {border-width: 0px;} 
                 div[data-testid="stCodeBlock"]> pre {background: rgb(248, 249, 255, 0);} 
-                div[data-testid="stMarkdownContainer"]> span{font-size:0.5rem}
+                div[data-testid="stMarkdownContainer"]> p {font-size:11px; font-family: Arial;}
+                button[data-testid="baseButton-secondary"] > p {font-size:11px; font-family: Arial;}
             </style>
             ''',unsafe_allow_html=True,)
-
 st.sidebar.write('''<img width="180" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
-col1, col2  = st.columns([1, 3])
+col1, col2  = st.columns([1, 5])
 with col1:
     st.session_state.chosen_id = st.selectbox('', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
 with col2:
@@ -352,7 +353,8 @@ if st.session_state.chosen_id == "ChatGPT 3.5":
     annotated_text(
         "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
         "", annotation("Google search", "Function",  font_size="0.7rem"),
-    )
+    )    
+    
     col1_chat1, col2_chat1 = st.columns([6, 2])
     with col1_chat1.container(height=650, border= False):
         message_hist_display(st.session_state.messages1)
@@ -401,11 +403,6 @@ if st.session_state.chosen_id == "ChatGPT 4":
                     message = {"role": "assistant", "content": res}
                     st.session_state.messages2.append(message) # Add response to message history           
                     chat_box(res)         
-
-def quick_btn_on_click():
-    print('hi')
-    return True
-
 
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
     annotated_text(
@@ -459,7 +456,11 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
             if st.session_state.messages4[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
-                        response = st.session_state.chat_engine2.query(prompt)
+                        if len(st.session_state.chat_db) == 1:
+                            # response = st.session_state.chat_engine_bm.query(prompt)
+                            response = st.session_state.chat_engine_react.chat(prompt, tool_choice = 'hybrid_retriever_documents')
+                        else:
+                            response = st.session_state.chat_engine2.query(prompt)
                         chat_box(response.response)                        
                         message = {"role": "assistant", "content": response.response}
                         st.session_state.messages4.append(message) # Add response to message history        
@@ -479,8 +480,6 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
         if len(st.session_state.display_datasource) > 0:
             display_customized_data(st.session_state.display_datasource)
             
-
-
 
 # with st.sidebar.expander("WEB DEEP SEARCH"): 
 #     all_page_data = st.text_input("URL", key = 'all_weburl') 

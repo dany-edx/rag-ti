@@ -471,7 +471,6 @@ class RedditMarketingSearchToolSpec(BaseToolSpec):
                              user_agent='my_apps/1.0')
         subreddit = reddit.subreddit('solar')
         search_results = subreddit.search(query, limit=3, time_filter= 'month')
-
         content = []
         total_comments = []
         for idx, submission in enumerate(search_results):
@@ -481,10 +480,10 @@ class RedditMarketingSearchToolSpec(BaseToolSpec):
                     comments.append("comment{} : {}".format(i, comment.body))    
                 except:
                     pass
-            content.append([submission.title, submission.url,submission.selftext[:2000], comments[:2]])
+            url = 'https://www.reddit.com/r/solar/comments/' + submission.id
+            content.append([submission.title, url, submission.selftext[:2000], comments[:2]])
         result_dict_list = [{'title': item[0], 'url': item[1], 'content': item[2], 'total_comments': item[3]} for item in content]
         return result_dict_list[:4]
-
 
 class AzureCloudManualSearchToolSpec(BaseToolSpec):
     """Azure microsoft cloud serivce manual search tool spec."""
