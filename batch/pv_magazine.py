@@ -106,7 +106,8 @@ class get_pv_magazine(get_pv_magazine_global, DB_Utils):
                     if self.type == 'national':
                         self.article_preview()
                     else:
-                        self.article_preview_global()
+                        if self.url == self.driver.current_url:
+                            self.article_preview_global()
                     # self.df = pd.DataFrame(self.dataset, columns = ['url','tag','author','updated_date','title', 'contents', 'img_url', 'national'])
                     self.check_folder_to_csv(file_path = '../data/pvmagazine/{}/{}'.format(self.dir_name, self.date.replace('/','')))
                     self.df = pd.DataFrame(self.dataset, columns = ['News_Url','News_tags','News_author','Released_Date','News_Title', 'News_Contents', 'News_Image', 'News_Nationality'])
@@ -139,9 +140,6 @@ class get_pv_magazine(get_pv_magazine_global, DB_Utils):
                 break
             
     def get_contents(self):
-        print(self.date)
-        print('=' * 30, 'NEWS' ,'=' * 30,'\n')
-
         totalcontents = self.driver.find_element(By.CLASS_NAME, 'singular-inner')
         self.selected_article_title = totalcontents.find_element(By.CLASS_NAME, 'entry-title').text
         try:
@@ -158,6 +156,11 @@ class get_pv_magazine(get_pv_magazine_global, DB_Utils):
             self.selected_article_author = ''
             pass
         self.selected_article_tag = ','.join([i.text for i in totalcontents.find_elements(By.CLASS_NAME, 'nav-link')])
+        print(self.date)
+        print('=' * 30, 'NEWS' ,'=' * 30,'\n')
+        print(self.selected_article_url)
+        print(self.selected_article_title)
+        
         self.dataset.append([self.selected_article_url, self.selected_article_tag, self.selected_article_author, self.date.replace('/','-'), self.selected_article_title, self.selected_article_contents, self.selected_article_img_url, self.dir_name])
         self.driver.back()
 
