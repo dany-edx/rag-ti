@@ -150,7 +150,8 @@ def make_data_instance():
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(st.session_state.external_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
-    st.session_state.chat_engine2 = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
+    # st.session_state.chat_engine2 = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
+    st.session_state.chat_engine2 = st.session_state.chat_db.multi_retriever()
     st.session_state.external_docs = []
 
 def message_hist_display(message_history):
@@ -220,6 +221,7 @@ def reset_conversation(x):
         st.session_state.messages4 = [{"role": "system", "content": "Hello, What can I do for you?"}]    
         st.session_state.prompts4 = []
     st.cache_resource.clear()
+    st.session_state.youtubeurl = ''
     st.session_state.display_datasource = []
     
 def document_uploader():        
@@ -418,11 +420,12 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
         "", annotation("aws.amazon.com", "Manual",  font_size="0.7rem"),
         "", annotation("microsoft.com", "Manual",  font_size="0.7rem"),
         "", annotation("pv-magazine.com", "News",  font_size="0.7rem"),     
-        "", annotation("reddit.com", "SNS",  font_size="0.7rem"),
+        "", annotation("reddit.com", "SNS",  font_size="0.7rem", background='#D38CAD'),
         "", annotation("PDF", "Function", font_size="0.7rem"),
         "", annotation("PPTX", "Function",  font_size="0.7rem"),
+        "", annotation("DOCX", "Function",  font_size="0.7rem"),
         "", annotation("YOUTUBE", "Function",  font_size="0.7rem"),
-        "", annotation("HTML", "Function",  font_size="0.7rem"),        
+        "", annotation("HTML", "Function",  font_size="0.7rem"),
     )
 
     with st.container(height=620, border= False):
@@ -456,7 +459,7 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
             if st.session_state.messages4[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
-                        response = st.session_state.chat_engine2.chat(prompt)
+                        response = st.session_state.chat_engine2.query(prompt)
                         chat_box(response.response)                        
                         message = {"role": "assistant", "content": response.response}
                         st.session_state.messages4.append(message) # Add response to message history        

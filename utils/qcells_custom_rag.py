@@ -28,6 +28,12 @@ from llama_index.core.selectors import (
 )
 from llama_index.core.retrievers import RouterRetriever
 from llama_index.program.openai import OpenAIPydanticProgram
+from llama_index.retrievers.bm25 import BM25Retriever
+from llama_index.core.retrievers import BaseRetriever
+from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
+from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
+from llama_index.postprocessor.cohere_rerank import CohereRerank
+
 
 llm =AzureOpenAI(
             model="gpt-35-turbo",
@@ -127,8 +133,81 @@ def get_timeline(seconds):
     h, m = divmod(m, 60)
     return '{}:{}:{}'.format(int(h), format(int(m), '02'), format(int(s), '02'))
 
+def translator(llm, other_lang): 
+    template = (
+        "You are an AI agent to translate other language into English."
+        "Translate into English, if the given text is not written in English."
+        "Return just tranlated word"
+        "\n---------------------\n"
+        "the given text: {query}"
+    )
+    qa_template = PromptTemplate(template)
+    prompt = qa_template.format(query = other_lang)
+    prompt = [ChatMessage(role='user', content=prompt)]
+    translated = llm.chat(prompt)
+    return translated.message.content
+    
+class HybridRetriever(BaseRetriever):
+    def __init__(self, vector_retriever, bm25_retriever):
+        self.vector_retriever = vector_retriever
+        self.bm25_retriever = bm25_retriever
+        super().__init__()
+
+    def _retrieve(self, query, **kwargs):
+        bm25_nodes = self.bm25_retriever.retrieve(query, **kwargs)
+        vector_nodes = self.vector_retriever.retrieve(query, **kwargs)
+
+        all_nodes = []
+        node_ids = set()
+        for n in bm25_nodes + vector_nodes:
+            if n.node.node_id not in node_ids:
+                all_nodes.append(n)
+                node_ids.add(n.node.node_id)
+        return all_nodes
+
+
 
 mrs = map_reduced_summary(llm = llm, embedding = embedding)
+
+
+class CustomRetriever(BaseRetriever):
+    def __init__(self, vector_retriever, postprocessor=None):
+        self._vector_retriever = vector_retriever
+        self._postprocessor = postprocessor 
+        super().__init__()
+
+    def _retrieve(self, query_bundle):
+        retrieved_nodes = self._vector_retriever.retrieve(query_bundle)
+        filtered_nodes = self._postprocessor.postprocess_nodes(
+            retrieved_nodes, query_bundle=query_bundle
+        )
+        return filtered_nodes
+
+class CustomObjectRetriever(ObjectRetriever):
+    def __init__(self, retriever, object_node_mapping, all_tools, llm=None):
+        self._retriever = retriever
+        self._object_node_mapping = object_node_mapping
+        self._llm = llm 
+
+    def retrieve(self, query_bundle):
+        nodes = self._retriever.retrieve(query_bundle)
+        tools = [self._object_node_mapping.from_node(n.node) for n in nodes]
+
+        sub_question_engine = SubQuestionQueryEngine.from_defaults(
+            query_engine_tools=tools, llm=self._llm
+        )
+        sub_question_description = f"""\
+Useful for any queries that involve comparing multiple documents. ALWAYS use this tool for comparison queries - make sure to call this \
+tool with the original query. Do NOT use the other tools for any queries involving multiple documents.
+"""
+        sub_question_tool = QueryEngineTool(
+            query_engine=sub_question_engine,
+            metadata=ToolMetadata(
+                name="compare_tool", description=sub_question_description
+            ),
+        )
+        return tools + [sub_question_tool]
+        
 class create_db_chat(BaseToolSpec):
     spec_functions = ['retriever_documents', 'multi_index_retriever_documents']
     
@@ -155,7 +234,7 @@ class create_db_chat(BaseToolSpec):
                 self.summary = ''
     
             elif doc[0].metadata['title'].split('.')[-1] == 'pdf':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
+                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
                 self.retriever_engine = self.index_node.as_retriever()
                 self.query_engine = self.index_node.as_query_engine()
                 self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
@@ -193,13 +272,19 @@ class create_db_chat(BaseToolSpec):
                                                                metadata=ToolMetadata(name="web_page_html_" + idx,
                                                                             description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
-            else:
+            
+            elif doc[0].metadata['resource'] =='youtube': 
+                print(doc)
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
                 self.retriever_engine = self.index_node.as_retriever()
                 self.query_engine = self.index_node.as_query_engine()
-                self.query_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
                                                                             name="youtube_" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
+                                                                            description="Please answer questions about the youtube content of the {}".format(doc[0].metadata['title'])))
+
+                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
+                                                               metadata=ToolMetadata(name="youtube_" + idx,
+                                                                            description="Please answer questions about the youtube content of the {}".format(doc[0].metadata['title']))))     
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
             
     def retriever_documents(self, query:str):
@@ -210,6 +295,7 @@ class create_db_chat(BaseToolSpec):
         Args:
             query (str): question about extracted documents.
         """
+        query = translator(self.llm, query)
         retriever = RouterRetriever(
                                     selector=PydanticMultiSelector.from_defaults(llm=self.llm),
                                     llm = self.llm, 
@@ -217,7 +303,7 @@ class create_db_chat(BaseToolSpec):
                                     )
         nodes = retriever.retrieve(query)
         return [i.text for i in nodes]
-    
+
     def multi_index_retriever_documents(self, query:str):
         """
         Answer a common question about extracted documents.
@@ -226,10 +312,35 @@ class create_db_chat(BaseToolSpec):
         Args:
             query (str): question about extracted documents.
         """
+        query = translator(self.llm, query)
         sub_query_agent = SubQuestionQueryEngine.from_defaults(
             query_engine_tools= self.query_engine_tools,
             service_context= self.service_context,
             use_async=True,
         )                   
         res = sub_query_agent.query(query)
-        return [i.text for i in res.source_nodes]
+        return res.response
+
+    def multi_retriever(self):
+        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=3)
+        all_tools = self.query_engine_tools
+        tool_mapping = SimpleToolNodeMapping.from_objects(all_tools)
+        obj_index = ObjectIndex.from_objects(
+            all_tools,
+            tool_mapping,
+            VectorStoreIndex,
+            service_context = self.service_context
+        )
+        vector_node_retriever = obj_index.as_node_retriever(similarity_top_k=5)
+        custom_node_retriever = CustomRetriever(vector_node_retriever, cohere_rerank)
+        custom_obj_retriever = CustomObjectRetriever(custom_node_retriever, tool_mapping, all_tools, llm=self.llm)        
+        top_agent = FnRetrieverOpenAIAgent.from_retriever(
+            custom_obj_retriever,
+            system_prompt=""" \
+        You are an agent designed to answer queries about the documentation.
+        Please always use the tools provided to answer a question. Do not rely on prior knowledge.\
+        """,
+            llm=self.llm,
+            verbose=True,
+        )      
+        return top_agent

@@ -44,6 +44,9 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from llama_index.core import PromptTemplate
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
+from docx import Document as py_Document
+
+
 
 class global_obj(object):
     chrome_options = Options()
@@ -139,7 +142,7 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
     url = '' 
     def document_analyzer(self, url:str, query:str):
         """
-        Answer a query about specific documents such as patents, journals, papers, etc.
+        Answer a query about specific documents such as patents, journals, papers, youtube etc.
         Drill down document to query about more detail information of specific document.
         Acquire data using URL links, and then query the information.
 
@@ -162,7 +165,19 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-
+        elif '.doc' in url.lower():
+            print('Docx URL Parsing')
+            if self.url != url:
+                response = requests.get(url)
+                docx_bytes = BytesIO(response.content)
+                doc = py_Document(docx_bytes)
+                text_list = []
+                for paragraph in doc.paragraphs:
+                    text_list.append(paragraph.text)
+                text_list = '\n'.join(text_list)
+                self.hybrid_retriever = self.documentize(text_list, url)
+            result = self.hybrid_retriever.retrieve(query)
+            result = [i.text for i in result]  
         elif '.pptx' in url:
             if self.url != url:
                 response = requests.get(url)
@@ -186,7 +201,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-
         elif 'https://www.cpuc.ca.gov' in url:
             try:
                 if self.url != url:
@@ -199,7 +213,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 result = [i.text for i in result]
             except:
                 pass
-
         elif 'https://paperswithcode.com' in url:
             href_list = []
             web_list = []
@@ -217,7 +230,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 'paper_summary' : href_list[0],
                 'pdf_urls' : list(set(web_list)),
                 'github_urls' : list(set(git_list))[:5]}
-            
         elif 'https://www.nature.com' in url:
             if self.url != url:
                 text_list = []
@@ -227,7 +239,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-            
         elif 'https://patents.google.com' in url:
             if self.url != url:
                 text_list = []
@@ -238,7 +249,6 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
                 self.hybrid_retriever = self.documentize(text_list, url)
             result = self.hybrid_retriever.retrieve(query)
             result = [i.text for i in result]
-
         elif 'www.reddit.com' in url:
             if self.url != url:
                 reddit = praw.Reddit(client_id='GIbgvR6hff64rcsIHihC3g',
@@ -439,7 +449,7 @@ class TexasUtilityCommissionSearchToolSpec(BaseToolSpec):
             abstract.append(d_tag.text)
         
         content = []
-        for t, u, a in zip(title, url, abstract):
+        for t, u, a in zip(title, urls, abstract):
             content.append([t, u, a])
         result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         return result_dict_list[:5]
