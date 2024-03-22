@@ -960,7 +960,7 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
         self.create_tools()
         
     def connect_db(self):
-        db = chromadb.HttpClient(host='localhost', port=8000, settings=Settings(chroma_client_auth_provider="chromadb.auth.basic.BasicAuthClientProvider",chroma_client_auth_credentials="qcells:qcells"))
+        db = chromadb.HttpClient(host='40.125.73.184', port=8000, settings=Settings(chroma_client_auth_provider="chromadb.auth.basic.BasicAuthClientProvider",chroma_client_auth_credentials="qcells:qcells"))
         chroma_collection = db.get_collection("pv_magazine_sentence_split")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         self.index = VectorStoreIndex.from_vector_store(vector_store,service_context=self.service_context, similarity_top_k=4, use_async=True)       
@@ -1037,7 +1037,7 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
         return res.response
 
 def qcell_engine(llm, embedding):
-    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
     vector_tool_spec = VectordbSearchToolSpec(llm, service_context)
     chat_engine = ReActAgent.from_llm(vector_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
@@ -1045,7 +1045,7 @@ def qcell_engine(llm, embedding):
 
 def web_engine(llm, embedding):
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
-    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
     web_tool_spec = GoogleRandomSearchToolSpec()
     web_tool_spec.service_context = service_context
     web_tool_spec.llm = llm

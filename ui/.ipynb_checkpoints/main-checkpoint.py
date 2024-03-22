@@ -143,14 +143,16 @@ if "youtube_embeded_html" not in st.session_state.keys():
     st.session_state.youtube_embeded_html = []
 if "img_embeded_html" not in st.session_state.keys(): 
     st.session_state.img_embeded_html = []
-
+if "display_datasource_idx" not in st.session_state.keys(): 
+    st.session_state.display_datasource_idx = 0
+    
 def make_data_instance():
     document_uploader()
     youtube_uploader()
     web_uploader()
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(st.session_state.external_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
-    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
     st.session_state.chat_engine_react = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
     st.session_state.chat_engine2 = st.session_state.chat_db.multi_retriever()
     # st.session_state.chat_engine_bm = st.session_state.chat_db.retriever_documents()
@@ -188,14 +190,22 @@ def websearch_func(prompt, response):
                         res = 'retry! ' + str(e)
     return res
     
+# def display_customized_data(_source):
+#     for idx, i in enumerate(_source):
+#         if 'pdf' in list(i.keys())[0]:
+#             pdf_viewer(input=i['pdf'], width=550, key = 'tmp' + str(idx))
+#         if 'youtube' in list(i.keys())[0]:
+#             st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
+#         if 'HTML' in list(i.keys())[0]:
+#             st.markdown(i['HTML'].replace('$', '\$'))
 def display_customized_data(_source):
-    for idx, i in enumerate(_source):
-        if 'pdf' in list(i.keys())[0]:
-            pdf_viewer(input=i['pdf'], width=550, key = 'tmp' + str(idx))
-        if 'youtube' in list(i.keys())[0]:
-            st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
-        if 'HTML' in list(i.keys())[0]:
-            st.markdown(i['HTML'].replace('$', '\$'))
+    if 'pdf' in list(_source.keys())[0]:
+        pdf_viewer(input=_source['pdf'], width=550)
+    if 'youtube' in list(_source.keys())[0]:
+        st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(_source['youtube']),unsafe_allow_html=True,)
+    if 'HTML' in list(_source.keys())[0]:
+        st.markdown(_source['HTML'].replace('$', '\$'))
+
 
 def reset_conversation(x):
     st.session_state.llm = set_llm()
@@ -337,7 +347,7 @@ if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt 
     if st.session_state.chosen_id == 'ChatGPT+MyData':
         st.session_state.prompts4.append(prompt)
         st.session_state.messages4.append({"role": "user", "content": prompt})
-
+    
 if st.session_state.chosen_id == "ChatGPT+MyData":
     with st.sidebar.expander("DOCUMENT"):
         st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
@@ -407,6 +417,7 @@ if st.session_state.chosen_id == "ChatGPT 4":
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
     annotation_size = '0.8rem'
     annotated_text(
+        "", annotation("google.com", "Search", font_size=annotation_size, background='#ffe6e6'),
         "", annotation("justia.com", "Patents", font_size=annotation_size),
         "", annotation("google.patent.com", "Patents",  font_size=annotation_size),
         "", annotation("paperswithcode.com", "Papers", font_size=annotation_size),
@@ -441,7 +452,19 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
                     chat_box(res)
                     message = {"role": "assistant", "content": res}
                     st.session_state.messages3.append(message) # Add response to message history        
-    
+
+
+def next_material_page(func):
+    if func == 'next':
+        index_int = 1
+    if func == 'before':
+        index_int = -1
+    if len(st.session_state.display_datasource)-1 >st.session_state.display_datasource_idx:
+        st.session_state.display_datasource_idx = st.session_state.display_datasource_idx + index_int
+    else:
+        st.session_state.display_datasource_idx = 0
+    print(st.session_state.display_datasource_idx)
+        
 if st.session_state.chosen_id == "ChatGPT+MyData":
     keys = [list(d.keys())[0] for d in st.session_state.display_datasource]
     key_counts = Counter(keys)    
@@ -450,11 +473,20 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
         "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
         "", annotation("WEB", str(key_counts['web']),  font_size="0.7rem"),
     )
-    
     col1_mychat, col2_mychat = st.columns([3, 2])
     with col1_mychat.container(height=650, border= False):
         message_hist_display(st.session_state.messages4)
         try:
+            
+            if len(st.session_state.chat_db.summary) > 0:
+                for i in st.session_state.chat_db.summary:
+                    message = {"role": "assistant", "content": i}
+                    st.session_state.messages4.append(message) # Add response to message history        
+                    st.session_state.chat_db.summary = []
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
+                        chat_box(i)
+                st.rerun()
+            
             if st.session_state.messages4[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
@@ -466,22 +498,20 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
                         chat_box(response.response)                        
                         message = {"role": "assistant", "content": response.response}
                         st.session_state.messages4.append(message) # Add response to message history        
-                        
-            if len(st.session_state.chat_db.summary) > 0:
-                for i in st.session_state.chat_db.summary:
-                    message = {"role": "assistant", "content": i}
-                    st.session_state.messages4.append(message) # Add response to message history        
-                    st.session_state.chat_db.summary = []
-                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                        chat_box(i)
+        
         except Exception as e:
             st.warning('Insert Documents | Youtube | Web Url', icon="⚠️")
             pass
-    
+
     with col2_mychat.container(height=650, border= False):
+        col1_btn, col2_btn = st.columns([1,9])
         if len(st.session_state.display_datasource) > 0:
-            display_customized_data(st.session_state.display_datasource)
-            
+            with col1_btn:
+                st.button("⬅️", on_click = next_material_page, args=["before"], key="btn_before_page")
+            with col2_btn:
+                st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
+            display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
+        
 
 # with st.sidebar.expander("WEB DEEP SEARCH"): 
 #     all_page_data = st.text_input("URL", key = 'all_weburl') 
