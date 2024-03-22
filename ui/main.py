@@ -303,7 +303,7 @@ def chat_box(text):
                 x = st.code(i, language = 'md')
 st.markdown('''
             <style>
-                html {font-size:13px; font-family: Arial;}
+                html {font-size:14px; font-family: Arial;}
                 img {border-radius: 10px;}
                 div[data-testid="stExpander"]> details {border-width: 0px;} 
                 div[data-testid="stCodeBlock"]> pre {background: rgb(248, 249, 255, 0);} 
@@ -405,24 +405,26 @@ if st.session_state.chosen_id == "ChatGPT 4":
                     chat_box(res)         
 
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
+    annotation_size = '0.8rem'
     annotated_text(
-        "", annotation("justia.com", "Patents", font_size="0.7rem"),
-        "", annotation("google.patent.com", "Patents",  font_size="0.7rem"),
-        "", annotation("paperswithcode.com", "Papers", font_size="0.7rem"),
-        "", annotation("nature.com", "Papers",  font_size="0.7rem"),
-        "", annotation("ercot.com", "Operation",  font_size="0.7rem"),
-        "", annotation("caiso.com", "Operation",  font_size="0.7rem"),
-        "", annotation("cpuc.ca.gov", "Commission",  font_size="0.7rem"),
-        "", annotation("puc.texas.gov", "Commission",  font_size="0.7rem"),
-        "", annotation("aws.amazon.com", "Manual",  font_size="0.7rem"),
-        "", annotation("microsoft.com", "Manual",  font_size="0.7rem"),
-        "", annotation("pv-magazine.com", "News",  font_size="0.7rem"),     
-        "", annotation("reddit.com", "SNS",  font_size="0.7rem", background='#D38CAD'),
-        "", annotation("PDF", "Function", font_size="0.7rem"),
-        "", annotation("PPTX", "Function",  font_size="0.7rem"),
-        "", annotation("DOCX", "Function",  font_size="0.7rem"),
-        "", annotation("YOUTUBE", "Function",  font_size="0.7rem"),
-        "", annotation("HTML", "Function",  font_size="0.7rem"),
+        "", annotation("justia.com", "Patents", font_size=annotation_size),
+        "", annotation("google.patent.com", "Patents",  font_size=annotation_size),
+        "", annotation("paperswithcode.com", "Papers", font_size=annotation_size),
+        "", annotation("nature.com", "Papers",  font_size=annotation_size),
+        "", annotation("ercot.com", "Operation",  font_size=annotation_size),
+        "", annotation("caiso.com", "Operation",  font_size=annotation_size),
+        "", annotation("cpuc.ca.gov", "Commission",  font_size=annotation_size),
+        "", annotation("puc.texas.gov", "Commission",  font_size=annotation_size),
+        "", annotation("aws.amazon.com", "Manual",  font_size=annotation_size),
+        "", annotation("microsoft.com", "Manual",  font_size=annotation_size),
+        "", annotation("developer.ibm.com", "Manual",  font_size=annotation_size),
+        "", annotation("pv-magazine.com", "News",  font_size=annotation_size),     
+        "", annotation("reddit.com", "SNS",  font_size=annotation_size, background='#D38CAD'),
+        "", annotation("PDF", "Function", font_size=annotation_size),
+        "", annotation("PPTX", "Function",  font_size=annotation_size),
+        "", annotation("DOCX", "Function",  font_size=annotation_size),
+        "", annotation("YOUTUBE", "Function",  font_size=annotation_size),
+        "", annotation("HTML", "Function",  font_size=annotation_size),
     )
 
     with st.container(height=620, border= False):

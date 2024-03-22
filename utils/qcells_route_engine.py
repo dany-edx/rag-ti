@@ -17,6 +17,7 @@ from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.schema import NodeWithScore, Node
 import json
 from llama_index.core.llms import ChatMessage, MessageRole
+from llama_index.postprocessor.cohere_rerank import CohereRerank
 from web_catch import * 
 import sys
 sys.path.append('../utils')
@@ -45,7 +46,9 @@ from llama_index.core import PromptTemplate
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
 from docx import Document as py_Document
-
+from llama_index.core.retrievers import BaseRetriever
+from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
+from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
 
 
 class global_obj(object):
@@ -153,8 +156,15 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
         """    
         if query == '':
             query = 'summarize. limited 1000-words.'
-        r=requests.get(url)
-        soup = BeautifulSoup(r.content, 'html.parser')
+        # r=requests.get(url)
+        # soup = BeautifulSoup(r.content, 'html.parser')
+        
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(3)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
 
         if '.pdf' in url:
             print('PDF URL Parsing')
@@ -521,6 +531,42 @@ class AzureCloudManualSearchToolSpec(BaseToolSpec):
             content.append([t, u, a])
         result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
         return result_dict_list[:5]
+
+class IBMDevSearchToolSpec(BaseToolSpec):
+    """IBM developer manual search tool spec."""
+    def ibm_dev_manaul(self, query:str):
+        """
+        Search IBM manaul search. 
+        Return manual title, url, abstract as json.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        query = translator(self.llm, query)
+        url= 'https://developer.ibm.com/?q={}'.format(query.replace(' ','+'))
+        driver = webdriver.Chrome(options=global_obj.chrome_options)
+        driver.delete_all_cookies()
+        driver.get(url) 
+        time.sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        
+        title = []
+        urls = []
+        abstract = []
+        div_tags = soup.find_all('div', {'class':'ibm--result-item'})
+        for d in div_tags:
+            a_tag = d.find_all('a')[0]
+            t = d.find_all('h2', {'class' : 'ibm--result-item__title'})[0].text
+            abs = d.find_all('p', {'class' : 'ibm--result-item__description'})[0].text
+            urls.append(a_tag.attrs['href'])
+            title.append(t)
+            abstract.append(abs)
+        content = []
+        for t, u, a in zip(title, urls, abstract):
+            content.append([t, u, a])
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]    
+        return result_dict_list[:5]
         
 class AWSCloudManualSearchToolSpec(BaseToolSpec):
     """AWS cloud serivce manual search tool spec."""
@@ -752,9 +798,9 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         return result_dict_list[:3]
 
 
-class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec, AzureCloudManualSearchToolSpec, CaliforniaEnergyMarketSearchToolSpec):
+class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec, AzureCloudManualSearchToolSpec, CaliforniaEnergyMarketSearchToolSpec, IBMDevSearchToolSpec):
     """Google random search tool spec."""
-    spec_functions = ["get_instinct_search_url", "google_search_drill_down_analysis"]
+    spec_functions = ["get_instinct_search_url"]
     def get_instinct_search_url(self, query):
         """
         Answer a simple question. 
@@ -836,14 +882,55 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
         return [i.text for i in result]
 
 
+
+class CustomRetriever(BaseRetriever):
+    def __init__(self, vector_retriever, postprocessor=None):
+        self._vector_retriever = vector_retriever
+        self._postprocessor = postprocessor 
+        super().__init__()
+
+    def _retrieve(self, query_bundle):
+        retrieved_nodes = self._vector_retriever.retrieve(query_bundle)
+        filtered_nodes = self._postprocessor.postprocess_nodes(
+            retrieved_nodes, query_bundle=query_bundle
+        )
+        return filtered_nodes
+
+class CustomObjectRetriever(ObjectRetriever):
+    def __init__(self, retriever, object_node_mapping, all_tools, llm=None):
+        self._retriever = retriever
+        self._object_node_mapping = object_node_mapping
+        self._llm = llm 
+
+    def retrieve(self, query_bundle):
+        nodes = self._retriever.retrieve(query_bundle)
+        tools = [self._object_node_mapping.from_node(n.node) for n in nodes]
+
+        sub_question_engine = SubQuestionQueryEngine.from_defaults(
+            query_engine_tools=tools, llm=self._llm
+        )
+        sub_question_description = f"""\
+Useful for any queries that involve comparing multiple documents. ALWAYS use this tool for comparison queries - make sure to call this \
+tool with the original query. Do NOT use the other tools for any queries involving multiple documents.
+"""
+        sub_question_tool = QueryEngineTool(
+            query_engine=sub_question_engine,
+            metadata=ToolMetadata(
+                name="compare_tool", description=sub_question_description
+            ),
+        )
+        return tools + [sub_question_tool]
+
+
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
-    spec_functions = ["vector_database_search", "google_patent_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul', 'azure_cloud_manaul', "california_information_search"]
+    spec_functions = ["vector_database_search", "google_patent_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul', 'azure_cloud_manaul', "california_information_search", "ibm_dev_manaul"]
     def __init__(self, llm, service_context):
         self.llm = llm
         self.service_context = service_context
         self.response_synth = []
         self.splitter = SentenceSplitter(chunk_size=512,chunk_overlap=20)
         self.pdf_url = ''
+        self.cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=4)
         self.filters = MetadataFilters(
             filters=[
                 MetadataFilter(key="release_date_year", operator=FilterOperator.GTE, value=2024),
@@ -868,6 +955,10 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
                 MetadataFilter(key="release_date_year", operator=FilterOperator.LT, value=2022),
             ]
         )
+        self.connect_db()
+        self.create_indexes()
+        self.create_tools()
+        
     def connect_db(self):
         db = chromadb.HttpClient(host='localhost', port=8000, settings=Settings(chroma_client_auth_provider="chromadb.auth.basic.BasicAuthClientProvider",chroma_client_auth_credentials="qcells:qcells"))
         chroma_collection = db.get_collection("pv_magazine_sentence_split")
@@ -875,60 +966,75 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
         self.index = VectorStoreIndex.from_vector_store(vector_store,service_context=self.service_context, similarity_top_k=4, use_async=True)       
 
     def create_indexes(self):
-        self.vector_queryengine = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.2 , similarity_top_k=4, filters = self.filters, verbose = True)
-        self.vector_queryengine1 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.2 , similarity_top_k=4, filters = self.filters1, verbose = True)
-        self.vector_queryengine2 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.2 , similarity_top_k=4, filters = self.filters2, verbose = True)
-        self.vector_queryengine3 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.2 , similarity_top_k=4, filters = self.filters3, verbose = True)
+        self.vector_queryengine = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.5 ,node_postprocessors=[self.cohere_rerank], similarity_top_k=10, filters = self.filters, verbose = True)
+        self.vector_queryengine1 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.5 ,node_postprocessors=[self.cohere_rerank], similarity_top_k=10, filters = self.filters1, verbose = True)
+        self.vector_queryengine2 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.5 ,node_postprocessors=[self.cohere_rerank],similarity_top_k=10, filters = self.filters2, verbose = True)
+        self.vector_queryengine3 = self.index.as_query_engine(vector_store_query_mode="hybrid", alpha = 0.5 ,node_postprocessors=[self.cohere_rerank], similarity_top_k=10, filters = self.filters3, verbose = True)
 
+    
     def create_tools(self):
         self.query_engine_tools = [
             QueryEngineTool(
                 query_engine=self.vector_queryengine,
                 metadata=ToolMetadata(
-                    name="news_retriever in 2024",
+                    name="news_retriever_in_2024",
                     description="Provides Renewable Energy industry related news documents that are released in 2024. this documents are stored in vector database."
                 ),
             ),
             QueryEngineTool(
                 query_engine=self.vector_queryengine1,
                 metadata=ToolMetadata(
-                    name="news_retriever in 2023",
+                    name="news_retriever_in_2023",
                     description="Provides Renewable Energy industry related news documents that are released in 2023. this documents are stored in vector database."
                 ),
             ),
             QueryEngineTool(
                 query_engine=self.vector_queryengine2,
                 metadata=ToolMetadata(
-                    name="news_retriever in 2022",
+                    name="news_retriever_in_2022",
                     description="Provides Renewable Energy industry related news documents that are released in 2022. this documents are stored in vector database."
                 ),
             ),
             QueryEngineTool(
                 query_engine=self.vector_queryengine3,
                 metadata=ToolMetadata(
-                    name="news_retriever in 2021",
+                    name="news_retriever_in_2021",
                     description="Provides Renewable Energy industry related news documents that are released in 2021. this documents are stored in vector database."
                 ),
             ),
-        ]        
+        ]         
+
     def vector_database_search(self, query: str):
         """
-        this is default tool. Answer a query about general renewable energy industry news. 
+        Answer a query about renewable energy industry news articles like trends, tech, new products release, manufacturing and businesses
         
+        Return query results
         Args:
             query (str): question about renewable energy industry news
-        """                
-        self.connect_db()
-        self.create_indexes()
-        self.create_tools()
-        self.news_agent = SubQuestionQueryEngine.from_defaults(
-            query_engine_tools=self.query_engine_tools,
-            service_context=self.service_context,
-            use_async=True,
-        )   
+        """              
         query = translator(self.llm, query)
-        res = self.news_agent.query(query)
-        return res
+        all_tools = self.query_engine_tools
+        tool_mapping = SimpleToolNodeMapping.from_objects(all_tools)
+        obj_index = ObjectIndex.from_objects(
+            all_tools,
+            tool_mapping,
+            VectorStoreIndex,
+            service_context = self.service_context
+        )
+        vector_node_retriever = obj_index.as_node_retriever(similarity_top_k=10)
+        custom_node_retriever = CustomRetriever(vector_node_retriever, self.cohere_rerank)
+        custom_obj_retriever = CustomObjectRetriever(custom_node_retriever, tool_mapping, all_tools, llm=self.llm)        
+        top_agent = FnRetrieverOpenAIAgent.from_retriever(
+            custom_obj_retriever,
+            system_prompt=""" \
+        You are an agent designed to answer queries about the solar energy industry.
+        Please always use the tools provided to answer a question. Do not rely on prior knowledge.\
+        """,
+            llm=self.llm,
+            verbose=True,
+        )  
+        res = top_agent.query(query)
+        return res.response
 
 def qcell_engine(llm, embedding):
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
