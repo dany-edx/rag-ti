@@ -35,6 +35,7 @@ from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRet
 from llama_index.postprocessor.cohere_rerank import CohereRerank
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import get_response_synthesizer
+from docx import Document as py_Document
 
 llm =AzureOpenAI(
             model="gpt-35-turbo",
@@ -89,7 +90,20 @@ def generate_strategy(high_level_query, answers):
     res_tasks = llm.chat(prompt)    
     lists = gen_program(query = high_level_query, context = res_tasks.message.content)        
     return lists.search_task, lists.analyze_task
+
+def docx_load_data(file):
+    print(file)
+    bytes_data = file.getvalue()
+    byte_io = io.BytesIO(bytes_data)
     
+    doc = py_Document(byte_io)
+    text_list = []
+    for paragraph in doc.paragraphs:
+        text_list.append(paragraph.text)
+    text_list = '\n'.join(text_list)
+    return text_list
+
+
 def pptx_load_data(file):
     bytes_data = file.getvalue()
     byte_io = io.BytesIO(bytes_data)
@@ -244,8 +258,6 @@ class create_db_chat(BaseToolSpec):
                 self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
                                                                metadata=ToolMetadata(name="pdf" + idx,
                                                                             description="Please answer questions about the content of the {}".format(doc[0].metadata['title']))))     
-
-                
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
                 
             elif doc[0].metadata['title'].split('.')[-1] == 'pptx':
@@ -260,7 +272,19 @@ class create_db_chat(BaseToolSpec):
                                                                             description="Please answer questions about the content of the {}".format(doc[0].metadata['title']))))     
 
                 self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
-                
+
+            elif doc[0].metadata['title'].split('.')[-1] == 'docx':
+                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
+                self.retriever_engine = self.index_node.as_retriever()
+                self.query_engine = self.index_node.as_query_engine()
+                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
+                                                                            name="docx" + idx,
+                                                                            description="Please answer questions about the web page content of the {}".format(doc[0].metadata['title'])))
+                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
+                                                               metadata=ToolMetadata(name="docx" + idx,
+                                                                            description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
+                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
+            
             elif doc[0].metadata['resource'] =='web_page': 
                 self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
                 self.retriever_engine = self.index_node.as_retriever()

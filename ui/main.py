@@ -24,7 +24,7 @@ sys.path.append("/workspaces/hanwhaqcells/utils")
 sys.path.append('../utils')
 from qcells_web_instance_search import instance_search_expanding
 from qcells_route_engine import qcell_engine, web_engine, Decide_to_search_external_web, GoogleRandomSearchToolSpec, VectordbSearchToolSpec
-from qcells_custom_rag import create_db_chat, pptx_load_data, pdf_load_data, get_youtube_metadata, get_timeline, generate_strategy
+from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_youtube_metadata, get_timeline, generate_strategy
 from web_crack import RemoteDepthReader
 from youtube_transcript_api import YouTubeTranscriptApi
 from streamlit_pdf_viewer import pdf_viewer
@@ -190,14 +190,7 @@ def websearch_func(prompt, response):
                         res = 'retry! ' + str(e)
     return res
     
-# def display_customized_data(_source):
-#     for idx, i in enumerate(_source):
-#         if 'pdf' in list(i.keys())[0]:
-#             pdf_viewer(input=i['pdf'], width=550, key = 'tmp' + str(idx))
-#         if 'youtube' in list(i.keys())[0]:
-#             st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(i['youtube']),unsafe_allow_html=True,)
-#         if 'HTML' in list(i.keys())[0]:
-#             st.markdown(i['HTML'].replace('$', '\$'))
+
 def display_customized_data(_source):
     if 'pdf' in list(_source.keys())[0]:
         pdf_viewer(input=_source['pdf'], width=550)
@@ -205,6 +198,8 @@ def display_customized_data(_source):
         st.write('<iframe src="{}" width="100%" height="400px"></iframe>'.format(_source['youtube']),unsafe_allow_html=True,)
     if 'HTML' in list(_source.keys())[0]:
         st.markdown(_source['HTML'].replace('$', '\$'))
+    if 'docx' in list(_source.keys())[0]:
+        st.markdown(_source['docx'].replace('$', '\$'))
 
 
 def reset_conversation(x):
@@ -254,6 +249,11 @@ def document_uploader():
                 result = pptx_load_data(doc) 
                 document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(document)    
+            if doc.name.split('.')[-1] == 'docx':
+                result = docx_load_data(doc) 
+                document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
+                st.session_state.external_docs.append(document)
+                st.session_state.display_datasource.append({'docx': result})
 
 def youtube_uploader():        
     if len(st.session_state.youtube_data) > 0:
