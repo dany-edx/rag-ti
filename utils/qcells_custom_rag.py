@@ -180,8 +180,6 @@ class HybridRetriever(BaseRetriever):
                 node_ids.add(n.node.node_id)
         return all_nodes
 
-
-
 mrs = map_reduced_summary(llm = llm, embedding = embedding)
 class CustomRetriever(BaseRetriever):
     def __init__(self, vector_retriever, postprocessor=None):
@@ -222,7 +220,7 @@ tool with the original query. Do NOT use the other tools for any queries involvi
         return tools + [sub_question_tool]
         
 class create_db_chat(BaseToolSpec):
-    spec_functions = ['hybrid_retriever_documents']
+    spec_functions = ['hybrid_retriever_documents', 'translate_documents']
     
     def __init__(self, _docs, llm, embedding, service_context):
         self.llm = llm
@@ -314,7 +312,7 @@ class create_db_chat(BaseToolSpec):
         return len(self._docs)
             
     def retriever_documents(self):
-        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=2)
+        cohere_rerank = CohereRerank(api_key='Gq7CC5ShzvSVm1FvPrSRpdYfWt6BHfbVwCHvzRDC', top_n=2)
         bm25_retriever = BM25Retriever.from_defaults(index=self.index_node, similarity_top_k=3)
         vector_retriever = self.index_node.as_retriever(similarity_top_k=3)
         hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
@@ -334,7 +332,7 @@ class create_db_chat(BaseToolSpec):
         Args:
             query (str): question about extracted documents.
         """        
-        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=2)
+        cohere_rerank = CohereRerank(api_key='Gq7CC5ShzvSVm1FvPrSRpdYfWt6BHfbVwCHvzRDC', top_n=2)
         bm25_retriever = BM25Retriever.from_defaults(index=self.index_node, similarity_top_k=3)
         vector_retriever = self.index_node.as_retriever(similarity_top_k=3)
         hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
@@ -364,8 +362,19 @@ class create_db_chat(BaseToolSpec):
         res = sub_query_agent.query(query)
         return res.response
 
+    def translate_documents(self, lang_to_translate):
+        """
+        Translate documents.
+        Return translated texts.
+
+        Args:
+            lang_to_translate (str): target language to translate
+        """
+        print(lang_to_translate)
+        return self.docs
+    
     def multi_retriever(self):
-        cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=5)
+        cohere_rerank = CohereRerank(api_key='Gq7CC5ShzvSVm1FvPrSRpdYfWt6BHfbVwCHvzRDC', top_n=5)
         all_tools = self.query_engine_tools
         tool_mapping = SimpleToolNodeMapping.from_objects(all_tools)
         obj_index = ObjectIndex.from_objects(

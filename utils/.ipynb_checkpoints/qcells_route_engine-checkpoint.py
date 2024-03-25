@@ -49,6 +49,7 @@ from docx import Document as py_Document
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
 from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
+import multiprocessing
 
 
 class global_obj(object):
@@ -648,9 +649,7 @@ class ComputerSciencePaperSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseT
         content = []
         for t, u, a in zip(title, urls, abstract):
             content.append([t, u, a])
-        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]
-        
-                
+        result_dict_list = [{'title': item[0], 'url': item[1], 'abstract': item[2]} for item in content]                
         # href_list = href_list[self.prev_len:]
         # self.prev_len = self.prev_len + len(href_list)        
 
@@ -722,7 +721,7 @@ class ChemistryEngineeringJournalSearchToolSpec(DocumentDrillDownAnalyzeToolSpec
         return result_list_of_dicts[:5]
     
 class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
-    """Jistia Web Patent random search tool spec."""
+    """Web Patent random search tool spec using Jistia."""
     def justia_patent_search(self, query):
         """
         Search patents on justia web for specific topic's patent url, abstract and title.
@@ -756,10 +755,10 @@ class JustiaPatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         return result_list_of_dicts[:3]
 
 class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToolSpec):
-    """Google Web patent random search second tool spec."""
+    """Patents search second tool spec using google-patent."""
     def google_patent_search(self, query:str):    
         """
-        Search patents on google patent web for specific topic's patent names and ids.
+        Search patents on google.patent web for specific topic's patent names and ids.
         Return patent pdf, url link, title as json type.
     
         Args:
@@ -797,13 +796,177 @@ class GooglePatentRandomSearchToolSpec(DocumentDrillDownAnalyzeToolSpec, BaseToo
         driver.quit()
         return result_dict_list[:3]
 
+class GoogleDeepSearchToolSpec(BaseToolSpec):
+    """Google search for high level questions."""
+    spec_functions = ["get_answer"]
+    result_queue = multiprocessing.Queue()
+    index = ''
+    
+    def get_answer(self, query):
+        """
+        Answer a detail analyzed query. 
+        Return analyzed detail retrieved data.
+        
+        Args:
+            query (str): searchable words on google (limited 4 words)
+        """
+        self.query = query
+        self.temperal_index()
+        
+        bm25_retriever = BM25Retriever.from_defaults(index=self.index, similarity_top_k=1)
+        vector_retriever = self.index.as_retriever(similarity_top_k=1)
+        hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
+        result = hybrid_retriever.retrieve(query)
+        return [i.text for i in result]
+    
+    def get_soup(self):
+        url= 'https://www.google.com/search?q={}&tbs=qdr:12m'.format(self.query.replace(' ','+'))
+        url_news = 'https://www.google.com/search?sca_esv=%EB%89%B4%EC%8A%A4&q={}&tbm=nws'.format(self.query.replace(' ','+'))
+        
+        try:
+            driver = webdriver.Chrome(options=global_obj.chrome_options)
+            driver.delete_all_cookies()
+            driver.set_page_load_timeout(10)
+
+            driver.get(url)
+            time.sleep(1)
+            self.soup = BeautifulSoup(driver.page_source, 'html.parser')
+            
+            driver.get(url_news)
+            time.sleep(1)
+            self.soup_news = BeautifulSoup(driver.page_source, 'html.parser')
+            driver.quit()
+        except:
+            driver.quit()
+            print('failed pass!')
+            pass
+        return self.soup, self.soup_news
+
+    def google_search_q_instance(self, soup):
+        urls = []
+        for div in soup.find_all('div'):
+            if 'data-initq' in div.attrs:
+                a_tags = div.find_all('a')
+                for a in a_tags:
+                    if 'http' in a.attrs['href']:
+                        urls.append(a.attrs['href'])
+        content = []
+        t1 = time.time()
+        processes = []
+        for url in urls[:2]:
+            p = multiprocessing.Process(target=self.get_string_from_news, kwargs={'url': url})
+            processes.append(p)
+            p.start()
+        for p in processes:
+            p.join()
+        p.close()
+        results = []
+        while not self.result_queue.empty():
+            result_string = self.result_queue.get()
+            results.append(result_string)        
+        return results
+        
+    def google_search_instance(self, soup):
+        print('google_search_instance...')
+        anchor_elements = [] 
+        for i in soup.find_all('div', id = 'search')[0].find_all(['div']):
+            if len(i.text) >2:
+                if len(i.attrs) == 1:
+                    if 'jsslot' not in i.attrs:
+                        if 'class' in i.attrs:
+                            if len(i.attrs['class']) == 1:
+                                if len(i.find_all('script')) == 0:
+                                    anchor_elements.append(i.text)
+        
+        a = list(set([i for i in anchor_elements if len(i) > 2]))
+        sorted_text_list = sorted(a, key=len)
+        result_text = remove_duplicate_spaces(''.join(sorted_text_list[-3:]))
+        result_text = remove_duplicate_newlines(result_text)
+        program = OpenAIPydanticProgram.from_defaults(
+            output_cls=GoogleResult,
+            llm=self.llm,
+            prompt_template_str=(
+                "This is google search result context.\n"
+                "I will give you question and google reult\n"
+        
+                "This is question\n"
+                "{query}\n"
+                
+                "\n"        
+                "This is Google result\n"
+                "{context}"
+            ),
+        )        
+        res = program(query = self.query, context = result_text)      
+        return [Document(text=res.Ingisht, metadata = {'url' : 'instance_search'})]
+    
+    def get_string_from_news(self, url):
+        t1 = time.time()
+        try:
+            driver = webdriver.Chrome(options=global_obj.chrome_options)
+            driver.delete_all_cookies()
+            driver.set_page_load_timeout(5)
+            driver.get(url)
+            
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            anchor_elements = soup.find_all('p')
+            result_string = '\n'.join([i.text.strip() for i in anchor_elements])  
+            driver.quit()
+            self.result_queue.put(Document(text=result_string[:20000], metadata = {'url' : url}))
+            print(url, time.time() - t1)
+        except:
+            driver.quit()
+            pass
+        
+    def google_search_news_instance(self, soup):
+        title_list = []
+        href_list = []
+        contents = []
+        d_tag = soup.find_all('div', id = 'search')
+        d_tag = d_tag[0].find_all('div')[0]
+        for d in d_tag:
+            a_tag = d.find_all('a')
+            if len(a_tag) > 0:
+                for a in a_tag:
+                    if 'href' in a.attrs:
+                        href_list.append(a.attrs['href'])
+                        title_list.append(a.text)
+        content = []
+        for t, u in zip(title_list, href_list):
+            content.append([t, u])
+        result_dict_list = [{'abstract': item[0], 'url': item[1]} for item in content]                
+        t1 = time.time()
+        urls = [c['url'] for c in result_dict_list]    
+        processes = []
+        for url in urls[:5]:
+            p = multiprocessing.Process(target=self.get_string_from_news, kwargs={'url': url})
+            processes.append(p)
+            p.start()
+        for p in processes:
+            p.join()
+        p.close()
+        
+        results = []
+        while not self.result_queue.empty():
+            result_string = self.result_queue.get()
+            results.append(result_string)
+        
+        print(time.time() - t1)
+        return results
+        
+    def temperal_index(self):
+        splitter = SentenceSplitter(chunk_size=512,chunk_overlap=51)
+        self.soup, self.soup_news = self.get_soup()
+        documents = self.google_search_instance(self.soup) + self.google_search_news_instance(self.soup_news)  
+        self.index = VectorStoreIndex.from_documents(documents=documents, transformations=[splitter], service_context = self.service_context, show_progress=True)
+
 
 class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, ComputerSciencePaperSearchToolSpec, JustiaPatentRandomSearchToolSpec, GooglePatentRandomSearchToolSpec, RedditMarketingSearchToolSpec, TexasEnergyMarketSearchToolSpec, CaliforniaUtilityCommisionSearchToolSepc, TexasUtilityCommissionSearchToolSpec, AWSCloudManualSearchToolSpec, AzureCloudManualSearchToolSpec, CaliforniaEnergyMarketSearchToolSpec, IBMDevSearchToolSpec):
-    """Google random search tool spec."""
+    """Google general information random search tool spec."""
     spec_functions = ["get_instinct_search_url"]
     def get_instinct_search_url(self, query):
         """
-        Answer a simple question. 
+        Answer a simple question using google search result. 
         Return simple answer.
         
         Args:
@@ -817,8 +980,6 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
         sorted_text_list = sorted(a, key=len)
         result_text = remove_duplicate_spaces(sorted_text_list[-1])
         result_text = remove_duplicate_newlines(result_text)
-
-        print(result_text)
         program = OpenAIPydanticProgram.from_defaults(
             output_cls=GoogleResult,
             llm=self.llm,
@@ -881,8 +1042,6 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
         result = hybrid_retriever.retrieve(query)
         return [i.text for i in result]
 
-
-
 class CustomRetriever(BaseRetriever):
     def __init__(self, vector_retriever, postprocessor=None):
         self._vector_retriever = vector_retriever
@@ -921,7 +1080,6 @@ tool with the original query. Do NOT use the other tools for any queries involvi
         )
         return tools + [sub_question_tool]
 
-
 class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
     spec_functions = ["vector_database_search", "google_patent_search", "justia_patent_search",  "chemistry_journal_search",  "computer_science_paper_search",  "get_instinct_search_url",  "reddit_post_search", "document_analyzer", "texas_information_search", "california_utility_commission_search", 'texas_utility_commission_search', 'aws_cloud_manaul', 'azure_cloud_manaul', "california_information_search", "ibm_dev_manaul"]
     def __init__(self, llm, service_context):
@@ -930,7 +1088,7 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
         self.response_synth = []
         self.splitter = SentenceSplitter(chunk_size=512,chunk_overlap=20)
         self.pdf_url = ''
-        self.cohere_rerank = CohereRerank(api_key='GegA3iKrkq6HuVA6grRVkOQId8DurfidXktMpQRo', top_n=4)
+        self.cohere_rerank = CohereRerank(api_key='Gq7CC5ShzvSVm1FvPrSRpdYfWt6BHfbVwCHvzRDC', top_n=4)
         self.filters = MetadataFilters(
             filters=[
                 MetadataFilter(key="release_date_year", operator=FilterOperator.GTE, value=2024),
@@ -1034,7 +1192,8 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
             verbose=True,
         )  
         res = top_agent.query(query)
-        return res.response
+        return res.response 
+
 
 def qcell_engine(llm, embedding):
     memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
@@ -1054,5 +1213,13 @@ def web_engine(llm, embedding):
                                        memory=memory, max_iterations = 10, llm = llm, verbose = True)
     return chat_engine
 
+def high_level_engine(llm, embedding):
+    service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    da = GoogleDeepSearchToolSpec()
+    da.service_context = service_context
+    da.llm = llm
+    rag = ReActAgent.from_llm(da.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
+    return rag
 # if __name__:
 #     chat_engine = qcell_engine()

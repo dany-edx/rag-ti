@@ -23,7 +23,7 @@ sys.path.append('/home/qcells/Desktop/rag_project/utils')
 sys.path.append("/workspaces/hanwhaqcells/utils")
 sys.path.append('../utils')
 from qcells_web_instance_search import instance_search_expanding
-from qcells_route_engine import qcell_engine, web_engine, Decide_to_search_external_web, GoogleRandomSearchToolSpec, VectordbSearchToolSpec
+from qcells_route_engine import qcell_engine, web_engine, Decide_to_search_external_web, GoogleRandomSearchToolSpec, VectordbSearchToolSpec, high_level_engine
 from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_youtube_metadata, get_timeline, generate_strategy
 from web_crack import RemoteDepthReader
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -109,6 +109,8 @@ if "rag" not in st.session_state:
     st.session_state.rag = qcell_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
 if "webrag" not in st.session_state:
     st.session_state.webrag = web_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
+if "high_level_rag" not in st.session_state:
+    st.session_state.high_level_rag = high_level_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
 if "service_context" not in st.session_state:
     st.session_state.service_context = ServiceContext.from_defaults(llm=st.session_state.llm,embed_model=st.session_state.embedding,)
 if "external_docs" not in st.session_state:
@@ -221,6 +223,7 @@ def reset_conversation(x):
         st.session_state.prompts2 = []
     if x == 'ChatGPT+TechSensing':
         st.session_state.rag.reset()
+        st.session_state.webrag.reset()
         st.session_state.rag = qcell_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
         st.session_state.messages3 = [{"role": "system", "content": "Hello, What can I do for you?"}]            
         st.session_state.prompts3 = []
@@ -248,7 +251,7 @@ def document_uploader():
             if doc.name.split('.')[-1] == 'pptx':
                 result = pptx_load_data(doc) 
                 document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
-                st.session_state.external_docs.append(document)    
+                st.session_state.external_docs.append({'pptx': document})    
             if doc.name.split('.')[-1] == 'docx':
                 result = docx_load_data(doc) 
                 document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
@@ -415,6 +418,7 @@ if st.session_state.chosen_id == "ChatGPT 4":
                     chat_box(res)         
 
 if st.session_state.chosen_id == "ChatGPT+TechSensing":  
+    on = st.toggle('High level Query')
     annotation_size = '0.8rem'
     annotated_text(
         "", annotation("google.com", "Search", font_size=annotation_size, background='#ffe6e6'),
@@ -444,7 +448,11 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
             with st.chat_message("assistant", avatar = './src/chatbot.png'):
                 with st.spinner("Thinking..."):
                     try:
-                        response = st.session_state.rag.chat(prompt)
+                        if on == False:
+                            response = st.session_state.rag.chat(prompt)
+                        if on == True:
+                            response = st.session_state.high_level_rag.chat(prompt) 
+                            st.session_state.high_level_rag.reset()
                         res = response.response
                     except Exception as e:
                         st.session_state.rag.reset()
@@ -470,8 +478,10 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
     key_counts = Counter(keys)    
     annotated_text(
         "", annotation("PDF", str(key_counts['pdf']), font_size="0.7rem"),
+        "", annotation("PPTX", str(key_counts['pptx']), font_size="0.7rem"),
+        "", annotation("DOCX", str(key_counts['docx']), font_size="0.7rem"),
         "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
-        "", annotation("WEB", str(key_counts['web']),  font_size="0.7rem"),
+        "", annotation("WEB", str(key_counts['HTML']),  font_size="0.7rem"),
     )
     col1_mychat, col2_mychat = st.columns([3, 2])
     with col1_mychat.container(height=650, border= False):
