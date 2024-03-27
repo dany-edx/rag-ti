@@ -303,13 +303,14 @@ def web_uploader():
 
 
 def translated_func():
-    if len(st.session_state.multiple_files) > 0:
-        with st.spinner("Translating..."):
-            with open(os.path.join("../tmp/translated/" + st.session_state.multiple_files[0].name),"wb") as f:
-                f.write(st.session_state.multiple_files[0].getbuffer())
-            sample = SampleTranslationWithAzureBlob()
-            poller = sample.sample_translation_with_azure_blob(st.session_state.multiple_files[0].name, to_lang = st.session_state.lang_selector)
-            st.session_state.is_done_translate = True
+    if len(st.session_state.multiple_files) > 0:        
+        for trans_doc in st.session_state.multiple_files:
+            with st.spinner('[{}]'.format(trans_doc.name) + " translating..."):
+                with open(os.path.join("../tmp/translated/" + trans_doc.name),"wb") as f:
+                    f.write(trans_doc.getbuffer())
+                sample = SampleTranslationWithAzureBlob()
+                poller = sample.sample_translation_with_azure_blob(trans_doc.name, to_lang = st.session_state.lang_selector)
+        st.session_state.is_done_translate = True
     else:
         st.toast('Need to insert document!')
 
@@ -389,10 +390,8 @@ if st.session_state["authentication_status"]:
     if st.session_state.chosen_id == "ChatGPT+MyData":
         with st.sidebar.expander("DOCUMENT"):
             st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
-            # sub_btn_col1, sub_btn_col2, sub_btn_col3 =st.columns(3)
-            # with sub_btn_col1:
             if len(st.session_state.multiple_files) > 0:
-                btn_doc = st.button("SAVE", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
+                btn_doc = st.button("START TALK", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
                 st.divider()
             sub_btn_col1, sub_btn_col2 =st.columns(2)
             with sub_btn_col1:
@@ -401,21 +400,23 @@ if st.session_state["authentication_status"]:
             with sub_btn_col2:
                 if len(st.session_state.multiple_files)>0:
                     btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
-                if len(st.session_state.multiple_files)>0:
-                    if st.session_state.is_done_translate == True:
-                        with open('../tmp/translated/' + 'translated_'+ st.session_state.multiple_files[0].name, "rb") as file:
-                            btn = st.download_button(label="Download", data=file,file_name='translated_'+st.session_state.multiple_files[0].name, use_container_width=True)
                 else:
                     st.session_state.is_done_translate = False
+            if len(st.session_state.multiple_files)>0:
+                if st.session_state.is_done_translate == True:
+                    for trans_doc in st.session_state.multiple_files:
+                        with open('../tmp/translated/' + 'translated_'+ trans_doc.name, "rb") as file:
+                            file_name = 'translated_' + trans_doc.name
+                            btn = st.download_button(label=file_name, data=file, file_name=file_name, use_container_width=True)
         
         with st.sidebar.expander("YOUTUBE"): 
             st.session_state.youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
             if len(st.session_state.youtube_data) > 0:
-                btn_youtube = st.button("SAVE", on_click = make_data_instance, key="btn_youtube", use_container_width=True)  
+                btn_youtube = st.button("START TALK", on_click = make_data_instance, key="btn_youtube", use_container_width=True)  
         with st.sidebar.expander("WEB PAGE"): 
             st.session_state.single_page_data = st.text_input("URL", key = 'single_weburl', placeholder = 'insert html url')
             if len(st.session_state.single_page_data) > 0:
-                btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
+                btn_singlepage = st.button("START TALK", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
     
     if st.session_state.chosen_id == "ChatGPT 3.5":
         annotated_text(
@@ -472,6 +473,31 @@ if st.session_state["authentication_status"]:
                         chat_box(res)         
     
     if st.session_state.chosen_id == "ChatGPT+TechSensing":  
+        with st.sidebar:
+            st.header('Tutorial prompt')
+            with st.expander("Example Q1. Paper search"):
+                st.write('- Please search object detection deep learning papers.')
+                st.write('- I would like to talk about the second paper.')
+                st.write("- Let's talk about the pdf. please summarize.")
+                st.write("- Answer based on pdf. what is the key points of the paper? and explain about algorithm")
+            with st.expander("Example Q2. Patent search"):
+                st.write('- Find Virtual power plant patent by enphase energy.')
+                st.write('- I would like to talk about the first patent.')
+                st.write("- Answer based on pdf. make a report about including key technologies in the patent.")
+            with st.expander("Example Q3. Direct Url talk"):
+                st.write('- extract pdf. https://www.nature.com/articles/s41467-024-46334-4.pdf')
+                st.write('- please provide 5 bullet points based on the pdf.')
+                st.write('- add emoji')
+                st.write("- let's talk about https://www.youtube.com/watch?v=YnyykZ8O1Eo&t=237s")
+                st.write("- find comparison categories based on the youtube video.")
+                st.write("- make comparison markdown table based on youtube video.")
+            with st.expander("Example Q4. News search (with high level query)"):
+                st.write('- Please find newly released product name by enphase energy in 2023, 2024.')
+                st.write('- find each product prices on google searching and make a report using markdown table.')
+            with st.expander("Example Q5. News search v2 (with high level query)"):
+                st.write('- find 2024 top-5 largest solar panel manufacturing capacity company in USA')
+                st.write('- find each company manufacturing and business plan in 2024.')
+            
         on = st.toggle('High level Query')
         annotation_size = '0.8rem'
         annotated_text(

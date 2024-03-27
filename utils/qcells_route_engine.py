@@ -66,7 +66,7 @@ class Decide_to_search_external_web(BaseModel):
     """
         Verifying if the response to the question is accurate, and deciding whether to conduct an external search.
         return
-            Succeed_answer (bool) : check if answer is acceptable or mentioned real-time data.
+            Succeed_answer (bool) : check if answer is acceptable and not mentioned real-time data.
             Decide_web_search (bool): check if need to Assess internet to answer.
             Searchable_query (str): searchable keywords on Google.(limited 4-words)
             Reason (bool): if query is clear question.
@@ -812,8 +812,8 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
         self.query = query
         self.temperal_index()
         
-        bm25_retriever = BM25Retriever.from_defaults(index=self.index, similarity_top_k=2)
-        vector_retriever = self.index.as_retriever(similarity_top_k=2)
+        bm25_retriever = BM25Retriever.from_defaults(index=self.index, similarity_top_k=1)
+        vector_retriever = self.index.as_retriever(similarity_top_k=1)
         hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
         result = hybrid_retriever.retrieve(query)
         return [i.text for i in result]
@@ -823,20 +823,24 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
         url_news = 'https://www.google.com/search?sca_esv=%EB%89%B4%EC%8A%A4&q={}&tbm=nws'.format(self.query.replace(' ','+'))
         
         try:
-            driver = webdriver.Chrome(options=global_obj.chrome_options)
-            driver.delete_all_cookies()
-            driver.set_page_load_timeout(10)
+            # driver = webdriver.Chrome(options=global_obj.chrome_options)
+            # driver.delete_all_cookies()
+            # driver.set_page_load_timeout(10)
 
-            driver.get(url)
+            # driver.get(url)
+            r = requests.get(url, timeout=3,headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'})
             time.sleep(1)
-            self.soup = BeautifulSoup(driver.page_source, 'html.parser')
+            self.soup = BeautifulSoup(r.content, 'html.parser')            
+            # self.soup = BeautifulSoup(driver.page_source, 'html.parser')
             
-            driver.get(url_news)
+            # driver.get(url_news)
+            r = requests.get(url_news, timeout=3,headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'})            
             time.sleep(1)
-            self.soup_news = BeautifulSoup(driver.page_source, 'html.parser')
-            driver.quit()
+            self.soup_news = BeautifulSoup(r.content, 'html.parser')
+            # self.soup_news = BeautifulSoup(driver.page_source, 'html.parser')
+            # driver.quit()
         except:
-            driver.quit()
+            # driver.quit()
             print('failed pass!')
             pass
         return self.soup, self.soup_news
@@ -944,18 +948,18 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
             p.start()
         for p in processes:
             p.join()
-        print('DONE!')
         p.close()
         
         results = []
         while not self.result_queue.empty():
             result_string = self.result_queue.get()
             results.append(result_string)
+        
         print(time.time() - t1)
         return results
         
     def temperal_index(self):
-        splitter = SentenceSplitter(chunk_size=128,chunk_overlap=20)
+        splitter = SentenceSplitter(chunk_size=512,chunk_overlap=51)
         self.soup, self.soup_news = self.get_soup()
         documents = self.google_search_instance(self.soup) + self.google_search_news_instance(self.soup_news)  
         self.index = VectorStoreIndex.from_documents(documents=documents, transformations=[splitter], service_context = self.service_context, show_progress=True)
@@ -1224,7 +1228,7 @@ def high_level_engine(llm, embedding):
     da.service_context = service_context
     da.llm = llm
     
-    rag = ReActAgent.from_llm(da.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
+    rag = ReActAgent.from_llm(da.to_tool_list() + web_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
     return rag
 # if __name__:
 #     chat_engine = qcell_engine()
