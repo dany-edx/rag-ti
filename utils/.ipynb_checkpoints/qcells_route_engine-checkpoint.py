@@ -1196,7 +1196,7 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
 
 
 def qcell_engine(llm, embedding):
-    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
     vector_tool_spec = VectordbSearchToolSpec(llm, service_context)
     chat_engine = ReActAgent.from_llm(vector_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
@@ -1204,7 +1204,7 @@ def qcell_engine(llm, embedding):
 
 def web_engine(llm, embedding):
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
-    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
     web_tool_spec = GoogleRandomSearchToolSpec()
     web_tool_spec.service_context = service_context
     web_tool_spec.llm = llm
@@ -1215,11 +1215,17 @@ def web_engine(llm, embedding):
 
 def high_level_engine(llm, embedding):
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
-    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
+    
+    web_tool_spec = GoogleRandomSearchToolSpec()
+    web_tool_spec.service_context = service_context
+    web_tool_spec.llm = llm
+    
     da = GoogleDeepSearchToolSpec()
     da.service_context = service_context
     da.llm = llm
-    rag = ReActAgent.from_llm(da.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
+    
+    rag = ReActAgent.from_llm(da.to_tool_list() + web_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
     return rag
 # if __name__:
 #     chat_engine = qcell_engine()

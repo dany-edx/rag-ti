@@ -220,7 +220,7 @@ tool with the original query. Do NOT use the other tools for any queries involvi
         return tools + [sub_question_tool]
         
 class create_db_chat(BaseToolSpec):
-    spec_functions = ['hybrid_retriever_documents', 'translate_documents']
+    spec_functions = ['hybrid_retriever_documents']
     
     def __init__(self, _docs, llm, embedding, service_context):
         self.llm = llm
@@ -365,10 +365,10 @@ class create_db_chat(BaseToolSpec):
     def translate_documents(self, lang_to_translate):
         """
         Translate documents.
-        Return translated texts.
+        Return translated texts. 
 
         Args:
-            lang_to_translate (str): target language to translate
+            lang_to_translate (str): target language to translate. choose [en], [ko]. 
         """
         print(lang_to_translate)
         return self.docs

@@ -22,6 +22,7 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 sys.path.append('/home/qcells/Desktop/rag_project/utils')
 sys.path.append("/workspaces/hanwhaqcells/utils")
 sys.path.append('../utils')
+from azure_translate import SampleTranslationWithAzureBlob
 from qcells_web_instance_search import instance_search_expanding
 from qcells_route_engine import qcell_engine, web_engine, Decide_to_search_external_web, GoogleRandomSearchToolSpec, VectordbSearchToolSpec, high_level_engine
 from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_youtube_metadata, get_timeline, generate_strategy
@@ -147,6 +148,8 @@ if "img_embeded_html" not in st.session_state.keys():
     st.session_state.img_embeded_html = []
 if "display_datasource_idx" not in st.session_state.keys(): 
     st.session_state.display_datasource_idx = 0
+if "is_done_translate" not in st.session_state.keys(): 
+    st.session_state.is_done_translate = False
     
 def make_data_instance():
     document_uploader()
@@ -154,7 +157,7 @@ def make_data_instance():
     web_uploader()
     with st.spinner("Creating knowledge database"):
         st.session_state.chat_db = create_db_chat(st.session_state.external_docs, st.session_state.llm_rag, st.session_state.embedding,  st.session_state.service_context)
-    memory = ChatMemoryBuffer.from_defaults(token_limit=4000)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
     st.session_state.chat_engine_react = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
     st.session_state.chat_engine2 = st.session_state.chat_db.multi_retriever()
     # st.session_state.chat_engine_bm = st.session_state.chat_db.retriever_documents()
@@ -230,6 +233,7 @@ def reset_conversation(x):
     if x == 'ChatGPT+MyData':
         st.session_state.messages4 = [{"role": "system", "content": "Hello, What can I do for you?"}]    
         st.session_state.prompts4 = []
+        st.session_state.display_datasource_idx = 0
     st.cache_resource.clear()
     st.session_state.youtubeurl = ''
     st.session_state.display_datasource = []
@@ -295,6 +299,19 @@ def web_uploader():
         st.session_state.display_datasource.append({'HTML': result_string})
         st.session_state.external_docs.append(web_data_documents)
 
+
+def translated_func():
+    if len(st.session_state.multiple_files) > 0:
+        with st.spinner("Translating..."):
+            with open(os.path.join("../tmp/translated/" + st.session_state.multiple_files[0].name),"wb") as f:
+                f.write(st.session_state.multiple_files[0].getbuffer())
+            sample = SampleTranslationWithAzureBlob()
+            poller = sample.sample_translation_with_azure_blob(st.session_state.multiple_files[0].name, to_lang = st.session_state.lang_selector)
+            st.session_state.is_done_translate = True
+    else:
+        st.toast('Need to insert document!')
+
+
 def chat_box(text):
     texts = text.split('```')
     for i in texts:
@@ -354,20 +371,39 @@ if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt 
 if st.session_state.chosen_id == "ChatGPT+MyData":
     with st.sidebar.expander("DOCUMENT"):
         st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
-        btn_doc = st.button("SAVE", on_click = make_data_instance, key="btn_doc")  
+        # sub_btn_col1, sub_btn_col2, sub_btn_col3 =st.columns(3)
+        # with sub_btn_col1:
+        if len(st.session_state.multiple_files) > 0:
+            btn_doc = st.button("SAVE", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
+            st.divider()
+        sub_btn_col1, sub_btn_col2 =st.columns(2)
+        with sub_btn_col1:
+            if len(st.session_state.multiple_files)>0:
+                lang_selector = st.selectbox('', ('en', 'ko'), label_visibility="collapsed", key = 'lang_selector')
+        with sub_btn_col2:
+            if len(st.session_state.multiple_files)>0:
+                btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
+            if len(st.session_state.multiple_files)>0:
+                if st.session_state.is_done_translate == True:
+                    with open('../tmp/translated/' + 'translated_'+ st.session_state.multiple_files[0].name, "rb") as file:
+                        btn = st.download_button(label="Download", data=file,file_name='translated_'+st.session_state.multiple_files[0].name, use_container_width=True)
+            else:
+                st.session_state.is_done_translate = False
+    
     with st.sidebar.expander("YOUTUBE"): 
         st.session_state.youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
-        btn_youtube = st.button("SAVE", on_click = make_data_instance, key="btn_youtube")  
+        if len(st.session_state.youtube_data) > 0:
+            btn_youtube = st.button("SAVE", on_click = make_data_instance, key="btn_youtube", use_container_width=True)  
     with st.sidebar.expander("WEB PAGE"): 
-        st.session_state.single_page_data = st.text_input("URL", key = 'single_weburl') 
-        btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage")  
+        st.session_state.single_page_data = st.text_input("URL", key = 'single_weburl', placeholder = 'insert html url')
+        if len(st.session_state.single_page_data) > 0:
+            btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
 
 if st.session_state.chosen_id == "ChatGPT 3.5":
     annotated_text(
         "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
         "", annotation("Google search", "Function",  font_size="0.7rem"),
     )    
-    
     col1_chat1, col2_chat1 = st.columns([6, 2])
     with col1_chat1.container(height=650, border= False):
         message_hist_display(st.session_state.messages1)
@@ -451,8 +487,8 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
                         if on == False:
                             response = st.session_state.rag.chat(prompt)
                         if on == True:
-                            response = st.session_state.high_level_rag.chat(prompt) 
-                            st.session_state.high_level_rag.reset()
+                            response = st.session_state.high_level_rag.chat(prompt, tool_choice = 'get_answer') 
+                            # st.session_state.high_level_rag.reset()
                         res = response.response
                     except Exception as e:
                         st.session_state.rag.reset()
@@ -472,7 +508,7 @@ def next_material_page(func):
     else:
         st.session_state.display_datasource_idx = 0
     print(st.session_state.display_datasource_idx)
-        
+
 if st.session_state.chosen_id == "ChatGPT+MyData":
     keys = [list(d.keys())[0] for d in st.session_state.display_datasource]
     key_counts = Counter(keys)    
@@ -482,6 +518,7 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
         "", annotation("DOCX", str(key_counts['docx']), font_size="0.7rem"),
         "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
         "", annotation("WEB", str(key_counts['HTML']),  font_size="0.7rem"),
+        "", annotation("Translate", "Function", font_size="0.7rem"),
     )
     col1_mychat, col2_mychat = st.columns([3, 2])
     with col1_mychat.container(height=650, border= False):
@@ -504,7 +541,7 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
                             # response = st.session_state.chat_engine_bm.query(prompt)
                             response = st.session_state.chat_engine_react.chat(prompt, tool_choice = 'hybrid_retriever_documents')
                         else:
-                            response = st.session_state.chat_engine2.query(prompt)
+                            response = st.session_state.chat_engine2.chat(prompt)
                         chat_box(response.response)                        
                         message = {"role": "assistant", "content": response.response}
                         st.session_state.messages4.append(message) # Add response to message history        
@@ -521,8 +558,10 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
             with col2_btn:
                 st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
             display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
-        
+            
 
+    
+        
 # with st.sidebar.expander("WEB DEEP SEARCH"): 
 #     all_page_data = st.text_input("URL", key = 'all_weburl') 
 #     if st.session_state.webpageall_read_yn == False:
