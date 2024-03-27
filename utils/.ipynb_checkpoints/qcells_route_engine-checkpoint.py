@@ -51,7 +51,6 @@ from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
 from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
 import multiprocessing
 
-
 class global_obj(object):
     chrome_options = Options()
     chrome_options.add_argument("start-maximized")
@@ -813,8 +812,8 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
         self.query = query
         self.temperal_index()
         
-        bm25_retriever = BM25Retriever.from_defaults(index=self.index, similarity_top_k=1)
-        vector_retriever = self.index.as_retriever(similarity_top_k=1)
+        bm25_retriever = BM25Retriever.from_defaults(index=self.index, similarity_top_k=2)
+        vector_retriever = self.index.as_retriever(similarity_top_k=2)
         hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
         result = hybrid_retriever.retrieve(query)
         return [i.text for i in result]
@@ -903,19 +902,20 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
     def get_string_from_news(self, url):
         t1 = time.time()
         try:
-            driver = webdriver.Chrome(options=global_obj.chrome_options)
-            driver.delete_all_cookies()
-            driver.set_page_load_timeout(5)
-            driver.get(url)
-            
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            r = requests.get(url, timeout=3, headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'})
+            soup = BeautifulSoup(r.content, 'html.parser')            
+            # driver = webdriver.Chrome(options=global_obj.chrome_options)
+            # driver.delete_all_cookies()
+            # driver.set_page_load_timeout(5)
+            # driver.get(url)
+            # soup = BeautifulSoup(driver.page_source, 'html.parser')
             anchor_elements = soup.find_all('p')
             result_string = '\n'.join([i.text.strip() for i in anchor_elements])  
-            driver.quit()
-            self.result_queue.put(Document(text=result_string[:20000], metadata = {'url' : url}))
+            # driver.quit()
+            self.result_queue.put(Document(text=result_string[:5000], metadata = {'url' : url}))
             print(url, time.time() - t1)
         except:
-            driver.quit()
+            # driver.quit()
             pass
         
     def google_search_news_instance(self, soup):
@@ -944,18 +944,18 @@ class GoogleDeepSearchToolSpec(BaseToolSpec):
             p.start()
         for p in processes:
             p.join()
+        print('DONE!')
         p.close()
         
         results = []
         while not self.result_queue.empty():
             result_string = self.result_queue.get()
             results.append(result_string)
-        
         print(time.time() - t1)
         return results
         
     def temperal_index(self):
-        splitter = SentenceSplitter(chunk_size=512,chunk_overlap=51)
+        splitter = SentenceSplitter(chunk_size=128,chunk_overlap=20)
         self.soup, self.soup_news = self.get_soup()
         documents = self.google_search_instance(self.soup) + self.google_search_news_instance(self.soup_news)  
         self.index = VectorStoreIndex.from_documents(documents=documents, transformations=[splitter], service_context = self.service_context, show_progress=True)
@@ -1194,7 +1194,6 @@ class VectordbSearchToolSpec(GoogleRandomSearchToolSpec):
         res = top_agent.query(query)
         return res.response 
 
-
 def qcell_engine(llm, embedding):
     memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
     service_context = ServiceContext.from_defaults(llm=llm,embed_model=embedding)
@@ -1225,7 +1224,7 @@ def high_level_engine(llm, embedding):
     da.service_context = service_context
     da.llm = llm
     
-    rag = ReActAgent.from_llm(da.to_tool_list() + web_tool_spec.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
+    rag = ReActAgent.from_llm(da.to_tool_list(), memory=memory, max_iterations = 10, llm = llm, verbose = True)
     return rag
 # if __name__:
 #     chat_engine = qcell_engine()

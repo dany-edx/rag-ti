@@ -40,12 +40,13 @@ from annotated_text import *
 from annotated_text import *
 from htbuilder.units import unit
 from collections import Counter
-
+import yaml
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 rem = unit.rem
 parameters.LABEL_FONT_SIZE=rem(0.6)
-
 class global_obj(object):
     chrome_options = Options()
     chrome_options.add_argument("start-maximized")
@@ -61,7 +62,6 @@ class global_obj(object):
 def lanch_px_app():
     llama_index.core.set_global_handler("arize_phoenix")
     session = px.launch_app(host='0.0.0.0')
-    
 lanch_px_app()
 def set_llm():
     return AzureOpenAI(
@@ -98,6 +98,7 @@ def get_answer_yn(llm, query_str, text_chunks):
     synthesizer = get_response_synthesizer(llm = llm, response_mode="refine", output_cls = Decide_to_search_external_web)
     result_response = synthesizer.get_response(query_str = query_str, text_chunks=[text_chunks], verbose = True)      
     return result_response
+    
 if "llm" not in st.session_state:
     st.session_state.llm = set_llm()
 if "llm_rag" not in st.session_state:
@@ -227,6 +228,7 @@ def reset_conversation(x):
     if x == 'ChatGPT+TechSensing':
         st.session_state.rag.reset()
         st.session_state.webrag.reset()
+        st.session_state.high_level_rag.reset()
         st.session_state.rag = qcell_engine(llm = st.session_state.llm_rag, embedding = st.session_state.embedding)
         st.session_state.messages3 = [{"role": "system", "content": "Hello, What can I do for you?"}]            
         st.session_state.prompts3 = []
@@ -341,224 +343,244 @@ st.markdown('''
                 button[data-testid="baseButton-secondary"] > p {font-size:11px; font-family: Arial;}
             </style>
             ''',unsafe_allow_html=True,)
+
 st.sidebar.write('''<img width="180" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
-col1, col2  = st.columns([1, 5])
-with col1:
-    st.session_state.chosen_id = st.selectbox('', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
-with col2:
-    with stylable_container(
-        "reset1",
-        """
-        button {color: black;border-radius: 20px;}
-        """,):
-    
-        st.button('Reset Chat', on_click=reset_conversation,args=[st.session_state.chosen_id], key = 'reset1')
 
-if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
-    if st.session_state.chosen_id == 'ChatGPT 3.5':
-        st.session_state.prompts1.append(prompt)
-        st.session_state.messages1.append({"role": "user", "content": prompt})
-    if st.session_state.chosen_id == 'ChatGPT 4':
-        st.session_state.prompts2.append(prompt)
-        st.session_state.messages2.append({"role": "user", "content": prompt})
-    if st.session_state.chosen_id == 'ChatGPT+TechSensing':
-        st.session_state.prompts3.append(prompt)
-        st.session_state.messages3.append({"role": "user", "content": prompt})
-    if st.session_state.chosen_id == 'ChatGPT+MyData':
-        st.session_state.prompts4.append(prompt)
-        st.session_state.messages4.append({"role": "user", "content": prompt})
-    
-if st.session_state.chosen_id == "ChatGPT+MyData":
-    with st.sidebar.expander("DOCUMENT"):
-        st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
-        # sub_btn_col1, sub_btn_col2, sub_btn_col3 =st.columns(3)
-        # with sub_btn_col1:
-        if len(st.session_state.multiple_files) > 0:
-            btn_doc = st.button("SAVE", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
-            st.divider()
-        sub_btn_col1, sub_btn_col2 =st.columns(2)
-        with sub_btn_col1:
-            if len(st.session_state.multiple_files)>0:
-                lang_selector = st.selectbox('', ('en', 'ko'), label_visibility="collapsed", key = 'lang_selector')
-        with sub_btn_col2:
-            if len(st.session_state.multiple_files)>0:
-                btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
-            if len(st.session_state.multiple_files)>0:
-                if st.session_state.is_done_translate == True:
-                    with open('../tmp/translated/' + 'translated_'+ st.session_state.multiple_files[0].name, "rb") as file:
-                        btn = st.download_button(label="Download", data=file,file_name='translated_'+st.session_state.multiple_files[0].name, use_container_width=True)
-            else:
-                st.session_state.is_done_translate = False
-    
-    with st.sidebar.expander("YOUTUBE"): 
-        st.session_state.youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
-        if len(st.session_state.youtube_data) > 0:
-            btn_youtube = st.button("SAVE", on_click = make_data_instance, key="btn_youtube", use_container_width=True)  
-    with st.sidebar.expander("WEB PAGE"): 
-        st.session_state.single_page_data = st.text_input("URL", key = 'single_weburl', placeholder = 'insert html url')
-        if len(st.session_state.single_page_data) > 0:
-            btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
+with open('../utils/config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['pre-authorized']
+)
 
-if st.session_state.chosen_id == "ChatGPT 3.5":
-    annotated_text(
-        "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
-        "", annotation("Google search", "Function",  font_size="0.7rem"),
-    )    
-    col1_chat1, col2_chat1 = st.columns([6, 2])
-    with col1_chat1.container(height=650, border= False):
-        message_hist_display(st.session_state.messages1)
-        if st.session_state.messages1[-1]["role"] == "user":
-            with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                with st.spinner("Thinking..."):                    
-                    prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages1]
-                    response =   st.session_state.llm.chat(prompt_) #결과                   
-                    chat_box(response.message.content)
-                    message = {"role": "assistant", "content": response.message.content} #저장
-                    st.session_state.messages1.append(message) # Add response to message history       
-                res = websearch_func(prompt, response.message.content)
-            if res:
-                with st.chat_message("assistant", avatar = './src/web.png'):
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages1.append(message) # Add response to message history           
-                    chat_box(res)   
-    with col2_chat1.container(height=650, border= False):    
-        if (len(st.session_state.youtube_embeded_html) + len(st.session_state.img_embeded_html)) > 0:
-            for i in st.session_state.youtube_embeded_html:
-                st.write(f'''{i}<br>''',unsafe_allow_html=True)
-            for i in st.session_state.img_embeded_html:
-                st.write(f'''{i}<br>''',unsafe_allow_html=True)
-        else:
-            pass
-            
-if st.session_state.chosen_id == "ChatGPT 4":
-    annotated_text(
-        "", annotation("ChatGPT4", "Function", font_size="0.7rem"),
-        "", annotation("Google search", "Function",  font_size="0.7rem"),
-    )
-
-    with st.container(height=650, border= False):
-        message_hist_display(st.session_state.messages2)
-        if st.session_state.messages2[-1]["role"] == "user":
-            with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                with st.spinner("Thinking..."):
-                    prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages2]
-                    response = st.session_state.llm4.chat(prompt_) #결과                    
-                    chat_box(response.message.content )                        
-                    message = {"role": "assistant", "content": response.message.content} #저장
-                    st.session_state.messages2.append(message) # Add response to message history       
-                res = websearch_func(prompt, response.message.content)
-            if res:
+authenticator.login()
+if st.session_state["authentication_status"]:
+    # with st.sidebar:
+    #     authenticator.logout()
+    col1, col2  = st.columns([1, 5])
+    with col1:
+        st.session_state.chosen_id = st.selectbox('', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
+    with col2:
+        with stylable_container(
+            "reset1",
+            """
+            button {color: black;border-radius: 20px;}
+            """,):
+        
+            st.button('Reset Chat', on_click=reset_conversation,args=[st.session_state.chosen_id], key = 'reset1')
+    
+    if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
+        if st.session_state.chosen_id == 'ChatGPT 3.5':
+            st.session_state.prompts1.append(prompt)
+            st.session_state.messages1.append({"role": "user", "content": prompt})
+        if st.session_state.chosen_id == 'ChatGPT 4':
+            st.session_state.prompts2.append(prompt)
+            st.session_state.messages2.append({"role": "user", "content": prompt})
+        if st.session_state.chosen_id == 'ChatGPT+TechSensing':
+            st.session_state.prompts3.append(prompt)
+            st.session_state.messages3.append({"role": "user", "content": prompt})
+        if st.session_state.chosen_id == 'ChatGPT+MyData':
+            st.session_state.prompts4.append(prompt)
+            st.session_state.messages4.append({"role": "user", "content": prompt})
+        
+    if st.session_state.chosen_id == "ChatGPT+MyData":
+        with st.sidebar.expander("DOCUMENT"):
+            st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
+            # sub_btn_col1, sub_btn_col2, sub_btn_col3 =st.columns(3)
+            # with sub_btn_col1:
+            if len(st.session_state.multiple_files) > 0:
+                btn_doc = st.button("SAVE", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
+                st.divider()
+            sub_btn_col1, sub_btn_col2 =st.columns(2)
+            with sub_btn_col1:
+                if len(st.session_state.multiple_files)>0:
+                    lang_selector = st.selectbox('', ('en', 'ko'), label_visibility="collapsed", key = 'lang_selector')
+            with sub_btn_col2:
+                if len(st.session_state.multiple_files)>0:
+                    btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
+                if len(st.session_state.multiple_files)>0:
+                    if st.session_state.is_done_translate == True:
+                        with open('../tmp/translated/' + 'translated_'+ st.session_state.multiple_files[0].name, "rb") as file:
+                            btn = st.download_button(label="Download", data=file,file_name='translated_'+st.session_state.multiple_files[0].name, use_container_width=True)
+                else:
+                    st.session_state.is_done_translate = False
+        
+        with st.sidebar.expander("YOUTUBE"): 
+            st.session_state.youtube_data = st.text_input("URL", key='youtubeurl', placeholder = 'insert youtube url')
+            if len(st.session_state.youtube_data) > 0:
+                btn_youtube = st.button("SAVE", on_click = make_data_instance, key="btn_youtube", use_container_width=True)  
+        with st.sidebar.expander("WEB PAGE"): 
+            st.session_state.single_page_data = st.text_input("URL", key = 'single_weburl', placeholder = 'insert html url')
+            if len(st.session_state.single_page_data) > 0:
+                btn_singlepage = st.button("SAVE", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
+    
+    if st.session_state.chosen_id == "ChatGPT 3.5":
+        annotated_text(
+            "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
+            "", annotation("Google search", "Function",  font_size="0.7rem"),
+        )    
+        col1_chat1, col2_chat1 = st.columns([6, 2])
+        with col1_chat1.container(height=650, border= False):
+            message_hist_display(st.session_state.messages1)
+            if st.session_state.messages1[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages2.append(message) # Add response to message history           
-                    chat_box(res)         
-
-if st.session_state.chosen_id == "ChatGPT+TechSensing":  
-    on = st.toggle('High level Query')
-    annotation_size = '0.8rem'
-    annotated_text(
-        "", annotation("google.com", "Search", font_size=annotation_size, background='#ffe6e6'),
-        "", annotation("justia.com", "Patents", font_size=annotation_size),
-        "", annotation("google.patent.com", "Patents",  font_size=annotation_size),
-        "", annotation("paperswithcode.com", "Papers", font_size=annotation_size),
-        "", annotation("nature.com", "Papers",  font_size=annotation_size),
-        "", annotation("ercot.com", "Operation",  font_size=annotation_size),
-        "", annotation("caiso.com", "Operation",  font_size=annotation_size),
-        "", annotation("cpuc.ca.gov", "Commission",  font_size=annotation_size),
-        "", annotation("puc.texas.gov", "Commission",  font_size=annotation_size),
-        "", annotation("aws.amazon.com", "Manual",  font_size=annotation_size),
-        "", annotation("microsoft.com", "Manual",  font_size=annotation_size),
-        "", annotation("developer.ibm.com", "Manual",  font_size=annotation_size),
-        "", annotation("pv-magazine.com", "News",  font_size=annotation_size),     
-        "", annotation("reddit.com", "SNS",  font_size=annotation_size, background='#D38CAD'),
-        "", annotation("PDF", "Function", font_size=annotation_size),
-        "", annotation("PPTX", "Function",  font_size=annotation_size),
-        "", annotation("DOCX", "Function",  font_size=annotation_size),
-        "", annotation("YOUTUBE", "Function",  font_size=annotation_size),
-        "", annotation("HTML", "Function",  font_size=annotation_size),
-    )
-
-    with st.container(height=620, border= False):
-        message_hist_display(st.session_state.messages3)
-        if st.session_state.messages3[-1]["role"] == "user":
-            with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                with st.spinner("Thinking..."):
-                    try:
-                        if on == False:
-                            response = st.session_state.rag.chat(prompt)
-                        if on == True:
-                            response = st.session_state.high_level_rag.chat(prompt, tool_choice = 'get_answer') 
-                            # st.session_state.high_level_rag.reset()
-                        res = response.response
-                    except Exception as e:
-                        st.session_state.rag.reset()
-                        res = str(e)
-                    chat_box(res)
-                    message = {"role": "assistant", "content": res}
-                    st.session_state.messages3.append(message) # Add response to message history        
-
-
-def next_material_page(func):
-    if func == 'next':
-        index_int = 1
-    if func == 'before':
-        index_int = -1
-    if len(st.session_state.display_datasource)-1 >st.session_state.display_datasource_idx:
-        st.session_state.display_datasource_idx = st.session_state.display_datasource_idx + index_int
-    else:
-        st.session_state.display_datasource_idx = 0
-    print(st.session_state.display_datasource_idx)
-
-if st.session_state.chosen_id == "ChatGPT+MyData":
-    keys = [list(d.keys())[0] for d in st.session_state.display_datasource]
-    key_counts = Counter(keys)    
-    annotated_text(
-        "", annotation("PDF", str(key_counts['pdf']), font_size="0.7rem"),
-        "", annotation("PPTX", str(key_counts['pptx']), font_size="0.7rem"),
-        "", annotation("DOCX", str(key_counts['docx']), font_size="0.7rem"),
-        "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
-        "", annotation("WEB", str(key_counts['HTML']),  font_size="0.7rem"),
-        "", annotation("Translate", "Function", font_size="0.7rem"),
-    )
-    col1_mychat, col2_mychat = st.columns([3, 2])
-    with col1_mychat.container(height=650, border= False):
-        message_hist_display(st.session_state.messages4)
-        try:
-            
-            if len(st.session_state.chat_db.summary) > 0:
-                for i in st.session_state.chat_db.summary:
-                    message = {"role": "assistant", "content": i}
-                    st.session_state.messages4.append(message) # Add response to message history        
-                    st.session_state.chat_db.summary = []
-                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
-                        chat_box(i)
-                st.rerun()
-            
-            if st.session_state.messages4[-1]["role"] == "user":
+                    with st.spinner("Thinking..."):                    
+                        prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages1]
+                        response =   st.session_state.llm.chat(prompt_) #결과                   
+                        chat_box(response.message.content)
+                        message = {"role": "assistant", "content": response.message.content} #저장
+                        st.session_state.messages1.append(message) # Add response to message history       
+                    res = websearch_func(prompt, response.message.content)
+                if res:
+                    with st.chat_message("assistant", avatar = './src/web.png'):
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages1.append(message) # Add response to message history           
+                        chat_box(res)   
+        with col2_chat1.container(height=650, border= False):    
+            if (len(st.session_state.youtube_embeded_html) + len(st.session_state.img_embeded_html)) > 0:
+                for i in st.session_state.youtube_embeded_html:
+                    st.write(f'''{i}<br>''',unsafe_allow_html=True)
+                for i in st.session_state.img_embeded_html:
+                    st.write(f'''{i}<br>''',unsafe_allow_html=True)
+            else:
+                pass
+                
+    if st.session_state.chosen_id == "ChatGPT 4":
+        annotated_text(
+            "", annotation("ChatGPT4", "Function", font_size="0.7rem"),
+            "", annotation("Google search", "Function",  font_size="0.7rem"),
+        )
+    
+        with st.container(height=650, border= False):
+            message_hist_display(st.session_state.messages2)
+            if st.session_state.messages2[-1]["role"] == "user":
                 with st.chat_message("assistant", avatar = './src/chatbot.png'):
                     with st.spinner("Thinking..."):
-                        if len(st.session_state.chat_db) == 1:
-                            # response = st.session_state.chat_engine_bm.query(prompt)
-                            response = st.session_state.chat_engine_react.chat(prompt, tool_choice = 'hybrid_retriever_documents')
-                        else:
-                            response = st.session_state.chat_engine2.chat(prompt)
-                        chat_box(response.response)                        
-                        message = {"role": "assistant", "content": response.response}
+                        prompt_ = [ChatMessage(role=i['role'], content=i['content']) for i in st.session_state.messages2]
+                        response = st.session_state.llm4.chat(prompt_) #결과                    
+                        chat_box(response.message.content )                        
+                        message = {"role": "assistant", "content": response.message.content} #저장
+                        st.session_state.messages2.append(message) # Add response to message history       
+                    res = websearch_func(prompt, response.message.content)
+                if res:
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages2.append(message) # Add response to message history           
+                        chat_box(res)         
+    
+    if st.session_state.chosen_id == "ChatGPT+TechSensing":  
+        on = st.toggle('High level Query')
+        annotation_size = '0.8rem'
+        annotated_text(
+            "", annotation("google.com", "Search", font_size=annotation_size, background='#ffe6e6'),
+            "", annotation("justia.com", "Patents", font_size=annotation_size),
+            "", annotation("google.patent.com", "Patents",  font_size=annotation_size),
+            "", annotation("paperswithcode.com", "Papers", font_size=annotation_size),
+            "", annotation("nature.com", "Papers",  font_size=annotation_size),
+            "", annotation("ercot.com", "Operation",  font_size=annotation_size),
+            "", annotation("caiso.com", "Operation",  font_size=annotation_size),
+            "", annotation("cpuc.ca.gov", "Commission",  font_size=annotation_size),
+            "", annotation("puc.texas.gov", "Commission",  font_size=annotation_size),
+            "", annotation("aws.amazon.com", "Manual",  font_size=annotation_size),
+            "", annotation("microsoft.com", "Manual",  font_size=annotation_size),
+            "", annotation("developer.ibm.com", "Manual",  font_size=annotation_size),
+            "", annotation("pv-magazine.com", "News",  font_size=annotation_size),     
+            "", annotation("reddit.com", "SNS",  font_size=annotation_size, background='#D38CAD'),
+            "", annotation("PDF", "Function", font_size=annotation_size),
+            "", annotation("PPTX", "Function",  font_size=annotation_size),
+            "", annotation("DOCX", "Function",  font_size=annotation_size),
+            "", annotation("YOUTUBE", "Function",  font_size=annotation_size),
+            "", annotation("HTML", "Function",  font_size=annotation_size),
+        )
+    
+        with st.container(height=620, border= False):
+            message_hist_display(st.session_state.messages3)
+            if st.session_state.messages3[-1]["role"] == "user":
+                with st.chat_message("assistant", avatar = './src/chatbot.png'):
+                    with st.spinner("Thinking..."):
+                        try:
+                            if on == False:
+                                response = st.session_state.rag.chat(prompt)
+                            if on == True:
+                                response = st.session_state.high_level_rag.chat(prompt) 
+                                # st.session_state.high_level_rag.reset()
+                            res = response.response
+                        except Exception as e:
+                            st.session_state.rag.reset()
+                            res = str(e)
+                        chat_box(res)
+                        message = {"role": "assistant", "content": res}
+                        st.session_state.messages3.append(message) # Add response to message history        
+    
+    
+    def next_material_page(func):
+        if func == 'next':
+            index_int = 1
+        if func == 'before':
+            index_int = -1
+        if len(st.session_state.display_datasource)-1 >st.session_state.display_datasource_idx:
+            st.session_state.display_datasource_idx = st.session_state.display_datasource_idx + index_int
+        else:
+            st.session_state.display_datasource_idx = 0
+        print(st.session_state.display_datasource_idx)
+    
+    if st.session_state.chosen_id == "ChatGPT+MyData":
+        keys = [list(d.keys())[0] for d in st.session_state.display_datasource]
+        key_counts = Counter(keys)    
+        annotated_text(
+            "", annotation("PDF", str(key_counts['pdf']), font_size="0.7rem"),
+            "", annotation("PPTX", str(key_counts['pptx']), font_size="0.7rem"),
+            "", annotation("DOCX", str(key_counts['docx']), font_size="0.7rem"),
+            "", annotation("YOUTUBE", str(key_counts['youtube']),  font_size="0.7rem"),
+            "", annotation("WEB", str(key_counts['HTML']),  font_size="0.7rem"),
+            "", annotation("Translate", "Function", font_size="0.7rem"),
+        )
+        col1_mychat, col2_mychat = st.columns([3, 2])
+        with col1_mychat.container(height=650, border= False):
+            message_hist_display(st.session_state.messages4)
+            try:
+                
+                if len(st.session_state.chat_db.summary) > 0:
+                    for i in st.session_state.chat_db.summary:
+                        message = {"role": "assistant", "content": i}
                         st.session_state.messages4.append(message) # Add response to message history        
-        
-        except Exception as e:
-            st.warning('Insert Documents | Youtube | Web Url', icon="⚠️")
-            pass
-
-    with col2_mychat.container(height=650, border= False):
-        col1_btn, col2_btn = st.columns([1,9])
-        if len(st.session_state.display_datasource) > 0:
-            with col1_btn:
-                st.button("⬅️", on_click = next_material_page, args=["before"], key="btn_before_page")
-            with col2_btn:
-                st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
-            display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
+                        st.session_state.chat_db.summary = []
+                        with st.chat_message("assistant", avatar = './src/chatbot.png'):
+                            chat_box(i)
+                    st.rerun()
+                
+                if st.session_state.messages4[-1]["role"] == "user":
+                    with st.chat_message("assistant", avatar = './src/chatbot.png'):
+                        with st.spinner("Thinking..."):
+                            if len(st.session_state.chat_db) == 1:
+                                # response = st.session_state.chat_engine_bm.query(prompt)
+                                response = st.session_state.chat_engine_react.chat(prompt, tool_choice = 'hybrid_retriever_documents')
+                            else:
+                                response = st.session_state.chat_engine2.chat(prompt)
+                            chat_box(response.response)                        
+                            message = {"role": "assistant", "content": response.response}
+                            st.session_state.messages4.append(message) # Add response to message history        
             
+            except Exception as e:
+                st.warning('Insert Documents | Youtube | Web Url', icon="⚠️")
+                pass
+    
+        with col2_mychat.container(height=650, border= False):
+            col1_btn, col2_btn = st.columns([1,9])
+            if len(st.session_state.display_datasource) > 0:
+                with col1_btn:
+                    st.button("⬅️", on_click = next_material_page, args=["before"], key="btn_before_page")
+                with col2_btn:
+                    st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
+                display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
+            
+elif st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
+elif st.session_state["authentication_status"] is None:
+    st.warning('Please enter your username and password')
 
     
         
