@@ -237,80 +237,34 @@ class create_db_chat(BaseToolSpec):
 
         for idx, doc in enumerate(_docs):
             idx = str(idx)
+            doc_type = doc[0].metadata['resource']
             if doc[0].metadata['title'].split('.')[-1] == 'py':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter_code],show_progress=True)            
-                self.queryengine = self.index_node.as_query_engine()                
-                self.query_engine_tools.append(RetrieverTool(query_engine= self.queryengine, 
-                                                             name="Python_script_" + idx,
-                                                             description= "Please answer questions about the content of the this python script"))
-                self.summary = ''
-    
+                self.create_tools(idx, doc, doc_type, self.splitter_code)
             elif doc[0].metadata['title'].split('.')[-1] == 'pdf':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
-                self.retriever_engine = self.index_node.as_retriever()
-                self.query_engine = self.index_node.as_query_engine()
-                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="pdf" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
-
-                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="pdf" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title']))))     
-                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
-                
+                self.create_tools(idx, doc, doc_type, self.splitter2)
             elif doc[0].metadata['title'].split('.')[-1] == 'pptx':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.retriever_engine = self.index_node.as_retriever()
-                self.query_engine = self.index_node.as_query_engine()
-                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="pptx_" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title'])))
-                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="pptx_" + idx,
-                                                                            description="Please answer questions about the content of the {}".format(doc[0].metadata['title']))))     
-
-                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')
-
+                self.create_tools(idx, doc, doc_type, self.splitter)                
             elif doc[0].metadata['title'].split('.')[-1] == 'docx':
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.retriever_engine = self.index_node.as_retriever()
-                self.query_engine = self.index_node.as_query_engine()
-                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="docx" + idx,
-                                                                            description="Please answer questions about the web page content of the {}".format(doc[0].metadata['title'])))
-                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="docx" + idx,
-                                                                            description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
-                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
-            
+                self.create_tools(idx, doc, doc_type, self.splitter)
             elif doc[0].metadata['resource'] =='web_page': 
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter],show_progress=True)            
-                self.retriever_engine = self.index_node.as_retriever()
-                self.query_engine = self.index_node.as_query_engine()
-                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="web_page_html_" + idx,
-                                                                            description="Please answer questions about the web page content of the {}".format(doc[0].metadata['title'])))
-                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="web_page_html_" + idx,
-                                                                            description="Please answer questions about the  web page content of the {}".format(doc[0].metadata['title']))))     
-                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')                
-            
-            elif doc[0].metadata['resource'] =='youtube':      
-                self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [self.splitter2],show_progress=True)            
-                self.retriever_engine = self.index_node.as_retriever()
-                self.query_engine = self.index_node.as_query_engine()
-                self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=self.retriever_engine,
-                                                                            name="youtube_" + idx,
-                                                                            description="Please answer questions about the youtube content of the {}".format(doc[0].metadata['title'])))
-
-                self.query_engine_tools.append(QueryEngineTool(query_engine=self.query_engine,
-                                                               metadata=ToolMetadata(name="youtube_" + idx,
-                                                                            description="Please answer questions about the youtube content of the {}".format(doc[0].metadata['title']))))     
-                self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
+                self.create_tools(idx, doc, doc_type, self.splitter)
+            elif doc[0].metadata['resource'] =='youtube':    
+                self.create_tools(idx, doc, doc_type, self.splitter2)
 
     def __len__(self):
         return len(self._docs)
-            
+
+    def create_tools(self, idx, doc, doc_type, splitter):
+        self.index_node = GPTVectorStoreIndex.from_documents(doc, service_context = self.service_context, transformations= [splitter],show_progress=True)            
+        retriever_engine = self.index_node.as_retriever()
+        query_engine = self.index_node.as_query_engine()
+        self.retriever_engine_tools.append(RetrieverTool.from_defaults(retriever=retriever_engine, name= doc_type + "_" + idx,
+                                                                    description="Please answer questions about the {} content of the {}".format(doc_type, doc[0].metadata['title'])))
+
+        self.query_engine_tools.append(QueryEngineTool(query_engine=query_engine, metadata=ToolMetadata(name="youtube_" + idx,
+                                                                    description="Please answer questions about the {} content of the {}".format(doc_type, doc[0].metadata['title']))))     
+        self.summary.append(doc[0].metadata['title'] + '\n\n' + mrs.create_document_summary('\n'.join([i.text for i in doc])) + '\n\n\n')            
+    
     def retriever_documents(self):
         cohere_rerank = CohereRerank(api_key='Gq7CC5ShzvSVm1FvPrSRpdYfWt6BHfbVwCHvzRDC', top_n=2)
         bm25_retriever = BM25Retriever.from_defaults(index=self.index_node, similarity_top_k=3)

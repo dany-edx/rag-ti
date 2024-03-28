@@ -1,10 +1,6 @@
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
-import os 
-import re
-import requests
 from bs4 import BeautifulSoup
-import io
 from io import StringIO, BytesIO
 from tqdm.auto import tqdm
 from llama_index.core.agent import ReActAgent
@@ -30,13 +26,10 @@ from web_crack import RemoteDepthReader
 from youtube_transcript_api import YouTubeTranscriptApi
 from streamlit_pdf_viewer import pdf_viewer
 import phoenix as px
-import base64
 import os
-import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
-from annotated_text import *
 from annotated_text import *
 from htbuilder.units import unit
 from collections import Counter
@@ -161,7 +154,6 @@ def make_data_instance():
     memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
     st.session_state.chat_engine_react = ReActAgent.from_llm(st.session_state.chat_db.to_tool_list(), memory = memory, llm = st.session_state.llm_rag, verbose = True)    
     st.session_state.chat_engine2 = st.session_state.chat_db.multi_retriever()
-    # st.session_state.chat_engine_bm = st.session_state.chat_db.retriever_documents()
     st.session_state.external_docs = []
 
 def message_hist_display(message_history):
@@ -174,12 +166,10 @@ def message_hist_display(message_history):
             avatar = './src/human.png'                
         with st.chat_message(message["role"], avatar = avatar):
             msg = message["content"]
-            # if (idx == 0) or (message["role"] != 'system'):
             chat_box(msg)
 
 def websearch_func(prompt, response):
     answer_eval = get_answer_yn(st.session_state.llm, prompt, response)
-    print(answer_eval)
     res = None
     if answer_eval.Succeed_answer == False:     
         if answer_eval.Decide_web_search == True:
@@ -206,7 +196,8 @@ def display_customized_data(_source):
         st.markdown(_source['HTML'].replace('$', '\$'))
     if 'docx' in list(_source.keys())[0]:
         st.markdown(_source['docx'].replace('$', '\$'))
-
+    if 'py' in list(_source.keys())[0]:
+        st.code(_source['py'])
 
 def reset_conversation(x):
     st.session_state.llm = set_llm()
@@ -244,25 +235,32 @@ def document_uploader():
     if len(st.session_state.multiple_files) > 0:
         st.session_state.external_docs = []
         for doc in st.session_state.multiple_files:
-            if doc.name.split('.')[-1] == 'pdf':
+            doc_type = doc.name.split('.')[-1]
+            if doc_type == 'pdf':
                 string_data = pdf_load_data(doc)
                 pdf_documents = [Document(text=string_data, metadata= {"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(pdf_documents)  
-                st.session_state.display_datasource.append({'pdf': doc.getvalue()})
-            if doc.name.split('.')[-1] == 'py':
+                st.session_state.display_datasource.append({doc_type: doc.getvalue()})
+                
+            if doc_type == 'py':
                 stringio = StringIO(doc.getvalue().decode("utf-8"))
                 string_data = stringio.read()
                 document = [Document(text=string_data, metadata= {"title" : doc.name, 'resource' : 'file'})]
-                st.session_state.external_docs.append(document)  
-            if doc.name.split('.')[-1] == 'pptx':
-                result = pptx_load_data(doc) 
-                document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
-                st.session_state.external_docs.append({'pptx': document})    
-            if doc.name.split('.')[-1] == 'docx':
-                result = docx_load_data(doc) 
-                document = [Document(text=result, metadata={"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(document)
-                st.session_state.display_datasource.append({'docx': result})
+                st.session_state.display_datasource.append({doc_type: string_data})
+                print(string_data)
+            
+            if doc_type == 'pptx':
+                string_data = pptx_load_data(doc) 
+                document = [Document(text=string_data, metadata={"title" : doc.name, 'resource' : 'file'})]
+                st.session_state.external_docs.append(document)    
+                # st.session_state.display_datasource.append({doc_type: doc.getvalue()})
+                
+            if doc_type == 'docx':
+                string_data = docx_load_data(doc) 
+                document = [Document(text=string_data, metadata={"title" : doc.name, 'resource' : 'file'})]
+                st.session_state.external_docs.append(document)
+                st.session_state.display_datasource.append({doc_type: string_data})
 
 def youtube_uploader():        
     if len(st.session_state.youtube_data) > 0:
@@ -301,7 +299,6 @@ def web_uploader():
         st.session_state.display_datasource.append({'HTML': result_string})
         st.session_state.external_docs.append(web_data_documents)
 
-
 def translated_func():
     if len(st.session_state.multiple_files) > 0:        
         for trans_doc in st.session_state.multiple_files:
@@ -313,7 +310,6 @@ def translated_func():
         st.session_state.is_done_translate = True
     else:
         st.toast('Need to insert document!')
-
 
 def chat_box(text):
     texts = text.split('```')
@@ -336,17 +332,16 @@ def chat_box(text):
                 x = st.code(i, language = 'md')
 st.markdown('''
             <style>
-                html {font-size:14px; font-family: Arial;}
+                html {font-size:14px; font-family: Arial; padding-top: 15px}
                 img {border-radius: 10px;}
+                div[data-testid="stSidebarUserContent"]{style: "padding-top: 1rem";}
                 div[data-testid="stExpander"]> details {border-width: 0px;} 
                 div[data-testid="stCodeBlock"]> pre {background: rgb(248, 249, 255, 0);} 
                 div[data-testid="stMarkdownContainer"]> p {font-size:11px; font-family: Arial;}
                 button[data-testid="baseButton-secondary"] > p {font-size:11px; font-family: Arial;}
             </style>
             ''',unsafe_allow_html=True,)
-
-st.sidebar.write('''<img width="180" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
-
+st.sidebar.write('''<img width="200" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
 with open('../utils/config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 authenticator = stauth.Authenticate(
@@ -390,21 +385,22 @@ if st.session_state["authentication_status"]:
     if st.session_state.chosen_id == "ChatGPT+MyData":
         with st.sidebar.expander("DOCUMENT"):
             st.session_state.multiple_files = st.file_uploader("Uploader", accept_multiple_files=True, key='file_uploader')
+            translatable_docs = [m for m in st.session_state.multiple_files if m.name.split('.')[-1] != 'py']
             if len(st.session_state.multiple_files) > 0:
                 btn_doc = st.button("START TALK", on_click = make_data_instance, key="btn_doc", use_container_width=True)  
                 st.divider()
             sub_btn_col1, sub_btn_col2 =st.columns(2)
             with sub_btn_col1:
-                if len(st.session_state.multiple_files)>0:
+                if len(translatable_docs)>0:
                     lang_selector = st.selectbox('', ('en', 'ko'), label_visibility="collapsed", key = 'lang_selector')
             with sub_btn_col2:
-                if len(st.session_state.multiple_files)>0:
+                if len(translatable_docs)>0:
                     btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
                 else:
                     st.session_state.is_done_translate = False
-            if len(st.session_state.multiple_files)>0:
+            if len(translatable_docs)>0:
                 if st.session_state.is_done_translate == True:
-                    for trans_doc in st.session_state.multiple_files:
+                    for trans_doc in translatable_docs:
                         with open('../tmp/translated/' + 'translated_'+ trans_doc.name, "rb") as file:
                             file_name = 'translated_' + trans_doc.name
                             btn = st.download_button(label=file_name, data=file, file_name=file_name, use_container_width=True)
@@ -568,7 +564,6 @@ if st.session_state["authentication_status"]:
         with col1_mychat.container(height=650, border= False):
             message_hist_display(st.session_state.messages4)
             try:
-                
                 if len(st.session_state.chat_db.summary) > 0:
                     for i in st.session_state.chat_db.summary:
                         message = {"role": "assistant", "content": i}
@@ -597,10 +592,11 @@ if st.session_state["authentication_status"]:
         with col2_mychat.container(height=650, border= False):
             col1_btn, col2_btn = st.columns([1,9])
             if len(st.session_state.display_datasource) > 0:
-                with col1_btn:
-                    st.button("⬅️", on_click = next_material_page, args=["before"], key="btn_before_page")
-                with col2_btn:
-                    st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
+                if len(st.session_state.display_datasource) > 1:
+                    with col1_btn:
+                        st.button("⬅️", on_click = next_material_page, args=["before"], key="btn_before_page")
+                    with col2_btn:
+                        st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
                 display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
             
 elif st.session_state["authentication_status"] is False:

@@ -26,14 +26,11 @@ from yahoo_finance import *
 from llama_index.core.agent import ReActAgent
 from langchain_community.document_loaders import AsyncChromiumLoader
 from langchain_community.document_transformers import BeautifulSoupTransformer
-import chromedriver_autoinstaller
-chromedriver_autoinstaller.install()
 import re
 from io import BytesIO
 from pptx import Presentation
 from bs4 import BeautifulSoup
 from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.core.retrievers import BaseRetriever
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time 
@@ -43,13 +40,13 @@ from llama_index.agent.openai import OpenAIAgent
 from qcells_custom_rag import get_youtube_metadata, get_timeline
 from youtube_transcript_api import YouTubeTranscriptApi
 from llama_index.core import PromptTemplate
-import chromedriver_autoinstaller
-chromedriver_autoinstaller.install()
 from docx import Document as py_Document
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.agent.openai_legacy import FnRetrieverOpenAIAgent
 from llama_index.core.objects import ObjectIndex,SimpleToolNodeMapping,ObjectRetriever
 import multiprocessing
+import chromedriver_autoinstaller
+chromedriver_autoinstaller.install()
 
 class global_obj(object):
     chrome_options = Options()
@@ -66,8 +63,8 @@ class Decide_to_search_external_web(BaseModel):
     """
         Verifying if the response to the question is accurate, and deciding whether to conduct an external search.
         return
-            Succeed_answer (bool) : check if answer is acceptable and not mentioned real-time data.
-            Decide_web_search (bool): check if need to Assess internet to answer.
+            Succeed_answer (bool) : Succeed_answer (bool) : check if response is acceptable or not mentioned real-time data or asking furthur qeustion.
+            Decide_web_search (bool): check if need to assess external source or internet to answer.
             Searchable_query (str): searchable keywords on Google.(limited 4-words)
             Reason (bool): if query is clear question.
     """
@@ -156,16 +153,12 @@ class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
         """    
         if query == '':
             query = 'summarize. limited 1000-words.'
-        # r=requests.get(url)
-        # soup = BeautifulSoup(r.content, 'html.parser')
-        
         driver = webdriver.Chrome(options=global_obj.chrome_options)
         driver.delete_all_cookies()
         driver.get(url) 
         time.sleep(3)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         driver.quit()
-
         if '.pdf' in url:
             print('PDF URL Parsing')
             if self.url != url:
