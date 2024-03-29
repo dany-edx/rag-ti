@@ -36,10 +36,40 @@ from collections import Counter
 import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
+from streamlit_msal import Msal
+from msal_streamlit_authentication import msal_authentication
+
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 rem = unit.rem
 parameters.LABEL_FONT_SIZE=rem(0.6)
+
+
+
+login_token = msal_authentication(
+    auth={
+        "clientId": 'f17632ac-7fc4-4525-a157-518f7cbcdc8d',
+        "authority": "https://login.microsoftonline.com/0f7b4e1c-344e-4923-aaf0-6fca9e6700c8",
+        "redirectUri": "/",
+        "postLogoutRedirectUri": "/"
+    }, # Corresponds to the 'auth' configuration for an MSAL Instance
+    cache={
+        "cacheLocation": "sessionStorage",
+        "storeAuthStateInCookie": False
+    }, # Corresponds to the 'cache' configuration for an MSAL Instance
+    login_request={
+        "scopes": ["User.Read"]
+    }, # Optional
+    logout_request={}, # Optional
+    login_button_text="Login", # Optional, defaults to "Login"
+    logout_button_text="Logout", # Optional, defaults to "Logout"
+    class_name="css_button_class_selector", # Optional, defaults to None. Corresponds to HTML class.
+    html_id="html_id_for_button", # Optional, defaults to None. Corresponds to HTML id.
+    key=1 # Optional if only a single instance is needed
+)
+st.write("Recevied login token:", login_token)
+
+    
 class global_obj(object):
     chrome_options = Options()
     chrome_options.add_argument("start-maximized")
