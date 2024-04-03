@@ -1,0 +1,4 @@
+oauth = {"CLIENT_ID" : "df709c24-e19e-4e77-b44a-f0b655304248",
+        "CLIENT_SECRET" : "zRp8Q~07BqYLNTfzjOzGbkavXY~-53nugxqPqcPn",
+        "REDIRECT_URI" : "https://qcells-us-rag.westus2.cloudapp.azure.com:442/",
+        "TENANT_ID" : "133df886-efe0-411c-a7af-73e5094bbe21"}

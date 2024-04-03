@@ -1,16 +1,14 @@
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
-from bs4 import BeautifulSoup
 from io import StringIO, BytesIO
 from tqdm.auto import tqdm
 from llama_index.core.agent import ReActAgent
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.core.memory import ChatMemoryBuffer
 import llama_index.core
-from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
-from llama_index.core import get_response_synthesizer,  ServiceContext, Document
 from llama_index.core.schema import Document
+from llama_index.core import ServiceContext
+
 import nest_asyncio
 __import__('pysqlite3')
 import sys
@@ -18,18 +16,15 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 sys.path.append('/home/qcells/Desktop/rag_project/utils')
 sys.path.append("/workspaces/hanwhaqcells/utils")
 sys.path.append('../utils')
-from azure_translate import SampleTranslationWithAzureBlob
-from qcells_web_instance_search import instance_search_expanding
-from qcells_route_engine import qcell_engine, web_engine, Decide_to_search_external_web, GoogleRandomSearchToolSpec, VectordbSearchToolSpec, high_level_engine
-from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_youtube_metadata, get_timeline, generate_strategy
-from web_crack import RemoteDepthReader
-from youtube_transcript_api import YouTubeTranscriptApi
+sys.path.append('./ui_utils')
+from selenium_utils import global_obj, web_uploader, translated_func, youtube_uploader, websearch_func
+from chatgpt_utils import set_llm, set_rag, set_llm4, set_embedding
+from qcells_route_engine import qcell_engine, web_engine, high_level_engine
+from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_timeline, generate_strategy
 from streamlit_pdf_viewer import pdf_viewer
 import phoenix as px
 import os
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
 from annotated_text import *
 from htbuilder.units import unit
 from collections import Counter
@@ -57,58 +52,12 @@ CLIENT_SECRET = 'zRp8Q~07BqYLNTfzjOzGbkavXY~-53nugxqPqcPn'
 REDIRECT_URI = 'https://qcells-us-rag.westus2.cloudapp.azure.com:442/'
 TENANT_ID = '133df886-efe0-411c-a7af-73e5094bbe21'
 
-class global_obj(object):
-    chrome_options = Options()
-    chrome_options.add_argument("start-maximized")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option("detach", True)
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
-
 @st.cache_resource
 def lanch_px_app():
     llama_index.core.set_global_handler("arize_phoenix")
     px.launch_app(host='0.0.0.0')
 lanch_px_app()
 
-def set_llm():
-    return AzureOpenAI(
-            model="gpt-35-turbo",
-            deployment_name="qcell_gpt_model",
-            temperature = 0,
-            api_key="c11ed4df2d35412b89a7b51a631bf0e4",
-            azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
-            api_version="2024-02-15-preview")
-def set_rag():
-    return AzureOpenAI(
-            model="gpt-35-turbo",
-            deployment_name="qcell-gpt-model-rag",
-            temperature = 0,
-            api_key="c11ed4df2d35412b89a7b51a631bf0e4",
-            azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
-            api_version="2024-02-15-preview")
-def set_llm4():
-    return AzureOpenAI(
-            model="gpt-4",
-            deployment_name="qcell_gpt4_model",
-            temperature = 0,
-            api_key="2b6d6cbbc0ae4276aad07db896f63bfd",
-            azure_endpoint="https://rag-openai-qcells-norway.openai.azure.com/",
-            api_version="2024-02-15-preview")
-def set_embedding():
-    return AzureOpenAIEmbedding(
-        model="text-embedding-ada-002",
-        deployment_name="qcell_embedding_model",
-        api_key="c11ed4df2d35412b89a7b51a631bf0e4",
-        azure_endpoint="https://rag-openai-qcells-east.openai.azure.com/",
-     api_version="2023-07-01-preview")
-def get_answer_yn(llm, query_str, text_chunks):
-    synthesizer = get_response_synthesizer(llm = llm, response_mode="refine", output_cls = Decide_to_search_external_web)
-    result_response = synthesizer.get_response(query_str = query_str, text_chunks=[text_chunks], verbose = True)      
-    return result_response
     
 if "llm" not in st.session_state:
     st.session_state.llm = set_llm()
@@ -191,7 +140,7 @@ def display_user():
         code = st.query_params.get_all('code')
         if code:
             st.session_state.is_signed_in = True
-            # _, st.session_state.user_email = asyncio.run(get_email(st.session_state.oauth_client, token['access_token']))            
+            # _, st.session_state.user_email = asyncio.run(get_email(st.session_state.oauth_client, token['access_token']))  
         else:
             st.session_state.is_signed_in = False
     except:
@@ -220,24 +169,6 @@ def message_hist_display(message_history):
             msg = message["content"]
             chat_box(msg)
 
-def websearch_func(prompt, response):
-    answer_eval = get_answer_yn(st.session_state.llm, prompt, response)
-    res = None
-    if answer_eval.Succeed_answer == False:     
-        if answer_eval.Decide_web_search == True:
-            if answer_eval.Reason == True:
-                with st.spinner("Google Search..."):
-                    ise = ''
-                    try:
-                        ise = instance_search_expanding(query = answer_eval.Searchable_query)
-                        st.session_state.youtube_embeded_html = ise.embed_html
-                        st.session_state.img_embeded_html = ise.img_list
-                        res = st.session_state.webrag.chat(answer_eval.Searchable_query)
-                        res = res.response
-                    except Exception as e:
-                        res = 'retry! ' + str(e)
-    return res
-    
 
 def display_customized_data(_source):
     if 'pdf' in list(_source.keys())[0]:
@@ -293,75 +224,22 @@ def document_uploader():
                 pdf_documents = [Document(text=string_data, metadata= {"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(pdf_documents)  
                 st.session_state.display_datasource.append({doc_type: doc.getvalue()})
-                
             if doc_type == 'py':
                 stringio = StringIO(doc.getvalue().decode("utf-8"))
                 string_data = stringio.read()
                 document = [Document(text=string_data, metadata= {"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(document)
                 st.session_state.display_datasource.append({doc_type: string_data})
-                print(string_data)
-            
             if doc_type == 'pptx':
                 string_data = pptx_load_data(doc) 
                 document = [Document(text=string_data, metadata={"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(document)    
                 # st.session_state.display_datasource.append({doc_type: doc.getvalue()})
-                
             if doc_type == 'docx':
                 string_data = docx_load_data(doc) 
                 document = [Document(text=string_data, metadata={"title" : doc.name, 'resource' : 'file'})]
                 st.session_state.external_docs.append(document)
                 st.session_state.display_datasource.append({doc_type: string_data})
-
-def youtube_uploader():        
-    if len(st.session_state.youtube_data) > 0:
-        meta_data = get_youtube_metadata(st.session_state.youtube_data)
-        st.session_state.display_datasource.append({'youtube': meta_data['embed_url']})
-        data = YouTubeTranscriptApi.get_transcript(st.session_state.youtube_data.split('v=')[-1])
-        documents = []
-        for i in data:
-            i['div'] = int(i['start'] / 60)  
-        total_text= []
-        distinct_div = set(item['div'] for item in data)
-        for idx, d in enumerate(distinct_div):
-            texts = []
-            k = [i for i in data if i['div'] == d]
-            start_time_min = min([i['start'] for i in k])
-            start_time_max = max([i['start'] for i in k])
-            text_div = [i['text'] for i in k]
-            texts.append('[youtube play time] {}\n'.format(get_timeline(start_time_min)) + ' '.join(text_div))
-            texts = '\n'.join(texts)
-            total_text.append(texts)            
-        total_text = '\n'.join(total_text)
-        documents.append(Document(text=total_text, metadata= {'title':  meta_data['title'], 'resource' : 'youtube'}))
-        st.session_state.external_docs.append(documents)
-
-def web_uploader(): 
-    if len(st.session_state.single_page_data) > 0:
-        driver = webdriver.Chrome( options=global_obj.chrome_options)
-        driver.delete_all_cookies()
-        driver.get(st.session_state.single_page_data) 
-        time.sleep(3)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        driver.quit()
-        anchor_elements = soup.find_all('p')
-        result_string = '\n'.join([i.text for i in anchor_elements])                
-        web_data_documents = [Document(text=result_string, metadata= {'title':  st.session_state.single_page_data, 'resource' : 'web_page'})]
-        st.session_state.display_datasource.append({'HTML': result_string})
-        st.session_state.external_docs.append(web_data_documents)
-
-def translated_func():
-    if len(st.session_state.multiple_files) > 0:        
-        for trans_doc in st.session_state.multiple_files:
-            with st.spinner('[{}]'.format(trans_doc.name) + " translating..."):
-                with open(os.path.join("../tmp/translated/" + trans_doc.name),"wb") as f:
-                    f.write(trans_doc.getbuffer())
-                sample = SampleTranslationWithAzureBlob()
-                poller = sample.sample_translation_with_azure_blob(trans_doc.name, to_lang = st.session_state.lang_selector)
-        st.session_state.is_done_translate = True
-    else:
-        st.toast('Need to insert document!')
 
 def chat_box(text):
     texts = text.split('```')
@@ -383,23 +261,6 @@ def chat_box(text):
                 """,):
                 x = st.code(i, language = 'md')
                 
-def heartbeat():
-    uuid = px.Client().get_trace_dataset().save(directory='./prompt_text')
-    with open("writelog.log", 'a') as f:
-        f.write(f"Alive at {datetime.datetime.now()}\n")
-
-def start_beating():
-    thread = threading.Timer(interval=2, function=start_beating)
-    add_script_run_ctx(thread)
-    ctx = get_script_run_ctx()     
-    runtime = get_instance()     # this is the main runtime, contains all the sessions    
-    if runtime.is_active_session(session_id=ctx.session_id):
-        thread.start()
-    else:
-        heartbeat()
-        return
-
-
 st.markdown('''
             <style>
                 html {font-size:14px; font-family: Arial; padding-top: 15px}
@@ -420,12 +281,6 @@ if st.session_state.is_signed_in == False:
     """, unsafe_allow_html=True)
     st.stop()
     
-# start_beating()
-# token = asyncio.run(get_access_token(st.query_params.get_all('code')[0])) ##여기서 부터 시작!! , 계정 로그인이 저장되는 현상을 막아야함. 리프레시 필수!
-# info = asyncio.run(get_email(token['access_token']))           
-# st.write('\n\n\n@@@@@,', token)
-# st.write(info)
-
 col1, col2  = st.columns([1, 5])
 with col1:
     st.session_state.chosen_id = st.selectbox('', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
@@ -485,6 +340,17 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
             btn_singlepage = st.button("START TALK", on_click = make_data_instance,  key="btn_singlepage",use_container_width=True)  
 
 if st.session_state.chosen_id == "ChatGPT 3.5":
+    with st.sidebar:
+        st.header('Tutorial prompt')
+        with st.expander("Example Q1. Simple Questions"):
+            st.write('- What is Hanwha Qcells business?')
+        with st.expander("Example Q2. Google browsing"):
+            st.write('- What is the current weather in san francisco?')
+            st.write('- Please find tesla stock price now.')
+            st.write('- Please let me know about IQ8 Microinverter price')
+        with st.expander("Example Q3. Coding correction"):
+            st.write('''- What is the current weather in san francisco?''')
+
     annotated_text(
         "", annotation("ChatGPT3.5", "Function", font_size="0.7rem"),
         "", annotation("Google search", "Function",  font_size="0.7rem"),
@@ -676,34 +542,3 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
                     st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
             display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
 
-
-# try:
-#     print('hi')
-# finally:
-#     uuid = px.Client().get_trace_dataset().save(directory='./prompt_text')
-
-# with st.sidebar.expander("WEB DEEP SEARCH"): 
-#     all_page_data = st.text_input("URL", key = 'all_weburl') 
-#     if st.session_state.webpageall_read_yn == False:
-#         if len(all_page_data) > 0:
-#             web_cracker = RemoteDepthReader()
-#             web_crack_documents = web_cracker.load_data(url=all_page_data)
-#             web_crack_documents = [i for i in web_crack_documents if i.split('.')[-1] == 'html']
-#             with st.spinner("Fetching page texts"):
-#                 docs = []
-#                 for i in tqdm(web_crack_documents[:50]):
-#                     loader = AsyncChromiumLoader([i])
-#                     bs_transformer = BeautifulSoupTransformer()
-#                     docs_transformed = bs_transformer.transform_documents(loader.load(), unwanted_tags= ['style','script'], tags_to_extract = ['a','p', 'span'])
-#                     result_string = remove_nested_parentheses(docs_transformed[0].page_content)
-#                     web_data_documents = [Document(text=result_string)]
-#                     web_data_documents[0].metadata['resource'] = 'web_allpage'
-#                     web_data_documents[0].metadata['title'] = 'web_allpage'
-#                     docs.append(web_data_documents[0])
-#             st.session_state.external_docs.append(docs)
-#             st.session_state.webpageall_read_yn = True
-#         else:
-#             st.session_state.webpageall_read_yn = False
-#     else:
-#         pass
-#     btn_allpage = st.button("SAVE", on_click = make_data_instance, args=[st.session_state.external_docs], key="btn_allpage")  
