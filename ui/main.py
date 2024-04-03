@@ -33,20 +33,29 @@ import time
 from annotated_text import *
 from htbuilder.units import unit
 from collections import Counter
-# import yaml
 import asyncio
-# from yaml.loader import SafeLoader
 from httpx_oauth.clients.microsoft import MicrosoftGraphOAuth2
-
+import threading 
+from streamlit.runtime.scriptrunner import add_script_run_ctx
+from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+from streamlit.runtime import get_instance
+import datetime
 nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 rem = unit.rem
 parameters.LABEL_FONT_SIZE=rem(0.6)
 
-CLIENT_ID = 'f17632ac-7fc4-4525-a157-518f7cbcdc8d'
-CLIENT_SECRET = '3k48Q~HELekDJTlvz_vAAVXSSi-JoJshp~cPPc7z'
+#hanwha domain
+# CLIENT_ID = 'f17632ac-7fc4-4525-a157-518f7cbcdc8d'
+# CLIENT_SECRET = '3k48Q~HELekDJTlvz_vAAVXSSi-JoJshp~cPPc7z'
+# REDIRECT_URI = 'https://qcells-us-rag.westus2.cloudapp.azure.com:442/'
+# TENANT_ID = '0f7b4e1c-344e-4923-aaf0-6fca9e6700c8'
+
+#us q-cells domain
+CLIENT_ID = 'df709c24-e19e-4e77-b44a-f0b655304248'
+CLIENT_SECRET = 'zRp8Q~07BqYLNTfzjOzGbkavXY~-53nugxqPqcPn'
 REDIRECT_URI = 'https://qcells-us-rag.westus2.cloudapp.azure.com:442/'
-TENANT_ID = '0f7b4e1c-344e-4923-aaf0-6fca9e6700c8'
+TENANT_ID = '133df886-efe0-411c-a7af-73e5094bbe21'
 
 class global_obj(object):
     chrome_options = Options()
@@ -62,8 +71,9 @@ class global_obj(object):
 @st.cache_resource
 def lanch_px_app():
     llama_index.core.set_global_handler("arize_phoenix")
-    session = px.launch_app(host='0.0.0.0')
+    px.launch_app(host='0.0.0.0')
 lanch_px_app()
+
 def set_llm():
     return AzureOpenAI(
             model="gpt-35-turbo",
@@ -152,11 +162,15 @@ if "display_datasource_idx" not in st.session_state.keys():
     st.session_state.display_datasource_idx = 0
 if "is_done_translate" not in st.session_state.keys(): 
     st.session_state.is_done_translate = False
+if "oauth_client" not in st.session_state.keys(): 
+    st.session_state.oauth_client = MicrosoftGraphOAuth2(CLIENT_ID, CLIENT_SECRET)
 if "is_signed_in" not in st.session_state.keys(): 
     st.session_state.is_signed_in = False
+if "user_email" not in st.session_state.keys(): 
+    st.session_state.user_email = ''
     
 async def get_authorization_url(client: MicrosoftGraphOAuth2, redirect_uri: str):
-    authorization_url = await client.get_authorization_url(redirect_uri, scope=["f17632ac-7fc4-4525-a157-518f7cbcdc8d/.default"])
+    authorization_url = await client.get_authorization_url(redirect_uri, scope=[CLIENT_ID + "/.default"])
     return authorization_url
     
 def get_login_str():
@@ -164,13 +178,12 @@ def get_login_str():
     authorization_url = asyncio.run(get_authorization_url(client, REDIRECT_URI))
     return authorization_url
     
-async def get_email(client: MicrosoftGraphOAuth2, token: str):
-    user_id, user_email = await client.get_id_email(token)
+async def get_email(token: str):
+    user_id, user_email = await st.session_state.oauth_client.get_id_email(token)
     return user_id, user_email
 
-
-async def get_access_token(client: MicrosoftGraphOAuth2, redirect_uri: str, code: str):
-    token = await client.get_access_token(code, redirect_uri)
+async def get_access_token(code: str):
+    token = await st.session_state.oauth_client.get_access_token(code, REDIRECT_URI)
     return token
 
 def display_user():
@@ -178,6 +191,7 @@ def display_user():
         code = st.query_params.get_all('code')
         if code:
             st.session_state.is_signed_in = True
+            # _, st.session_state.user_email = asyncio.run(get_email(st.session_state.oauth_client, token['access_token']))            
         else:
             st.session_state.is_signed_in = False
     except:
@@ -368,6 +382,24 @@ def chat_box(text):
                 code {font-size:11px; font-family: Arial; white-space: pre-wrap !important;}
                 """,):
                 x = st.code(i, language = 'md')
+                
+def heartbeat():
+    uuid = px.Client().get_trace_dataset().save(directory='./prompt_text')
+    with open("writelog.log", 'a') as f:
+        f.write(f"Alive at {datetime.datetime.now()}\n")
+
+def start_beating():
+    thread = threading.Timer(interval=2, function=start_beating)
+    add_script_run_ctx(thread)
+    ctx = get_script_run_ctx()     
+    runtime = get_instance()     # this is the main runtime, contains all the sessions    
+    if runtime.is_active_session(session_id=ctx.session_id):
+        thread.start()
+    else:
+        heartbeat()
+        return
+
+
 st.markdown('''
             <style>
                 html {font-size:14px; font-family: Arial; padding-top: 15px}
@@ -381,16 +413,19 @@ st.markdown('''
             ''',unsafe_allow_html=True,)
 st.sidebar.write('''<img width="200" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
 
-
-
 display_user()
 if st.session_state.is_signed_in == False:
     st.markdown(f"""
         <meta http-equiv="refresh" content="0; URL={get_login_str()}">
-
     """, unsafe_allow_html=True)
     st.stop()
     
+# start_beating()
+# token = asyncio.run(get_access_token(st.query_params.get_all('code')[0])) ##여기서 부터 시작!! , 계정 로그인이 저장되는 현상을 막아야함. 리프레시 필수!
+# info = asyncio.run(get_email(token['access_token']))           
+# st.write('\n\n\n@@@@@,', token)
+# st.write(info)
+
 col1, col2  = st.columns([1, 5])
 with col1:
     st.session_state.chosen_id = st.selectbox('', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
@@ -515,17 +550,24 @@ if st.session_state.chosen_id == "ChatGPT+TechSensing":
             st.write('- Find Virtual power plant patent by enphase energy.')
             st.write('- I would like to talk about the first patent.')
             st.write("- Answer based on pdf. make a report about including key technologies in the patent.")
-        with st.expander("Example Q3. Direct Url talk"):
+        with st.expander("Example Q3. Product news search"):
+            st.write('- what is the latest released product names by enphase energy in 2024?')
+            st.write('- please provide 5 bullet points based on the pdf.')
+            st.write('- add emoji')
+            st.write("- let's talk about https://www.youtube.com/watch?v=YnyykZ8O1Eo&t=237s")
+            st.write("- find comparison categories based on the youtube video.")
+            st.write("- make comparison markdown table based on youtube video.")
+        with st.expander("Example Q4. Direct Url talk"):
             st.write('- extract pdf. https://www.nature.com/articles/s41467-024-46334-4.pdf')
             st.write('- please provide 5 bullet points based on the pdf.')
             st.write('- add emoji')
             st.write("- let's talk about https://www.youtube.com/watch?v=YnyykZ8O1Eo&t=237s")
             st.write("- find comparison categories based on the youtube video.")
             st.write("- make comparison markdown table based on youtube video.")
-        with st.expander("Example Q4. News search (with high level query)"):
+        with st.expander("Example Q5. News search (with high level query)"):
             st.write('- Please find newly released product name by enphase energy in 2023, 2024.')
             st.write('- find each product prices on google searching and make a report using markdown table.')
-        with st.expander("Example Q5. News search v2 (with high level query)"):
+        with st.expander("Example Q6. News search v2 (with high level query)"):
             st.write('- find 2024 top-5 largest solar panel manufacturing capacity company in USA')
             st.write('- find each company manufacturing and business plan in 2024.')
         
@@ -578,7 +620,7 @@ def next_material_page(func):
         index_int = 1
     if func == 'before':
         index_int = -1
-    if len(st.session_state.display_datasource)-1 >st.session_state.display_datasource_idx:
+    if len(st.session_state.display_datasource)-1 > st.session_state.display_datasource_idx:
         st.session_state.display_datasource_idx = st.session_state.display_datasource_idx + index_int
     else:
         st.session_state.display_datasource_idx = 0
@@ -633,14 +675,13 @@ if st.session_state.chosen_id == "ChatGPT+MyData":
                 with col2_btn:
                     st.button("➡️", on_click = next_material_page, args=["next"], key="btn_next_page")                
             display_customized_data(st.session_state.display_datasource[st.session_state.display_datasource_idx])
-        
-# elif st.session_state["authentication_status"] is False:
-#     st.error('Username/password is incorrect')
-# elif st.session_state["authentication_status"] is None:
-#     st.warning('Please enter your username and password')
 
-    
-        
+
+# try:
+#     print('hi')
+# finally:
+#     uuid = px.Client().get_trace_dataset().save(directory='./prompt_text')
+
 # with st.sidebar.expander("WEB DEEP SEARCH"): 
 #     all_page_data = st.text_input("URL", key = 'all_weburl') 
 #     if st.session_state.webpageall_read_yn == False:

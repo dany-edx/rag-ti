@@ -136,6 +136,11 @@ class HybridRetriever(BaseRetriever):
                 node_ids.add(n.node.node_id)
         return all_nodes
 
+
+
+
+
+
 class DocumentDrillDownAnalyzeToolSpec(BaseToolSpec):
     """Drill down document to query about more detail information of specific document and summarize the contents of various documents such as patents, papers, and journals."""
     spec_functions = ["document_analyzer"]
@@ -964,7 +969,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
     def get_instinct_search_url(self, query):
         """
         Answer a simple question using google search result. 
-        Return simple answer.
+        Return simple answer as list.
         
         Args:
             query (str): searchable words on google (limited 4 words)
@@ -994,7 +999,7 @@ class GoogleRandomSearchToolSpec(ChemistryEngineeringJournalSearchToolSpec, Comp
             verbose=True,
         )        
         res = program(query = query, context = result_text)        
-        return res.Ingisht
+        return [res.Ingisht]
     
     def get_google_searched_urls(self, url):
         r=requests.get(url)
