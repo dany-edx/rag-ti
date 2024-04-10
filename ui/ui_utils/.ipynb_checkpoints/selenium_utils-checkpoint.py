@@ -22,7 +22,6 @@ class global_obj(object):
     chrome_options.add_experimental_option("detach", True)
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
 
-
 def heartbeat():
     uuid = px.Client().get_trace_dataset().save(directory='./prompt_text')
     with open("writelog.log", 'a') as f:
