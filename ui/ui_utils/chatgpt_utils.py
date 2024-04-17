@@ -16,9 +16,15 @@ TENANT_ID = '133df886-efe0-411c-a7af-73e5094bbe21'
 
 #hanwha domain
 CLIENT_ID2 = 'f17632ac-7fc4-4525-a157-518f7cbcdc8d'
-CLIENT_SECRET2 = '3k48Q~HELekDJTlvz_vAAVXSSi-JoJshp~cPPc7z'
+CLIENT_SECRET2 = 'BFp8Q~v2vaTSnK~MhAtGgKWE5KphWMCKx3rWldkr'
 REDIRECT_URI2 = 'https://qcells-us-rag.westus2.cloudapp.azure.com:442/login-hanwha'
 TENANT_ID2 = '0f7b4e1c-344e-4923-aaf0-6fca9e6700c8'            
+
+CLIENT_ID3 = '40f80c4c-12e2-43e8-9614-e29e124b66dd'
+CLIENT_SECRET3 = 'JcY8Q~jAEWNmv9wqXrEFJswvOeUitQ5BZwTVLaMy'
+REDIRECT_URI3 = 'https://qcells-us-rag.westus2.cloudapp.azure.com:442/login-de'
+TENANT_ID3 = 'f4abb120-61e0-424d-90ef-035c76189a53'            
+
 
 async def get_authorization_url(client: MicrosoftGraphOAuth2, redirect_uri: str):
     authorization_url = await client.get_authorization_url(redirect_uri, scope=[CLIENT_ID + "/.default"])
@@ -38,6 +44,14 @@ def get_login_str_hanwha():
     authorization_url = asyncio.run(get_authorization_url_hanwha(client, REDIRECT_URI2))
     return authorization_url
 
+async def get_authorization_url_de(client: MicrosoftGraphOAuth2, redirect_uri: str):
+    authorization_url = await client.get_authorization_url(redirect_uri, scope=[CLIENT_ID3 + "/.default"])
+    return authorization_url
+
+def get_login_str_de():
+    client: MicrosoftGraphOAuth2 = MicrosoftGraphOAuth2(CLIENT_ID3, CLIENT_SECRET3)
+    authorization_url = asyncio.run(get_authorization_url_de(client, REDIRECT_URI3))
+    return authorization_url
 
 async def get_email(client: MicrosoftGraphOAuth2, token: str):
     user_id, user_email = await client.get_id_email(token)
@@ -91,8 +105,6 @@ def get_tutorial_gpt():
             st.write('- What is the current weather in san francisco?')
             st.write('- Please find tesla stock price now.')
             st.write('- Please let me know about IQ8 Microinverter price')
-        with st.expander("Example Q3. Coding correction"):
-            st.write('''- What is the current weather in san francisco?''')
     
 def get_anno_tech_sensing():
     annotation_size = '0.8rem'

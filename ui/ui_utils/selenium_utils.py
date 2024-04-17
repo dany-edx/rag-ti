@@ -71,6 +71,7 @@ def translated_func():
                 sample = SampleTranslationWithAzureBlob()
                 poller = sample.sample_translation_with_azure_blob(trans_doc.name, to_lang = st.session_state.lang_selector)
         st.session_state.is_done_translate = True
+        
     else:
         st.toast('Need to insert document!')
 

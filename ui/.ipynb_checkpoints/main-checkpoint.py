@@ -19,7 +19,7 @@ sys.path.append('./ui_utils')
 from logger import MyLogger
 import logging
 from selenium_utils import global_obj, web_uploader, translated_func, youtube_uploader, websearch_func
-from chatgpt_utils import set_llm, set_rag, set_llm4, set_embedding, get_tutorial_tech_sensing, get_tutorial_gpt, get_anno_tech_sensing, get_session_init, get_login_str, get_login_str_hanwha
+from chatgpt_utils import set_llm, set_rag, set_llm4, set_embedding, get_tutorial_tech_sensing, get_tutorial_gpt, get_anno_tech_sensing, get_anno_mydata, get_session_init, get_login_str, get_login_str_de, get_login_str_hanwha
 from qcells_route_engine import qcell_engine, web_engine, high_level_engine
 from qcells_custom_rag import create_db_chat, docx_load_data, pptx_load_data, pdf_load_data, get_timeline, generate_strategy
 from streamlit_pdf_viewer import pdf_viewer
@@ -42,10 +42,11 @@ nest_asyncio.apply()
 st.set_page_config(page_title="RAG",  layout="wide",  page_icon="☀️")
 rem = unit.rem
 parameters.LABEL_FONT_SIZE=rem(0.6)
+log_file_name = datetime.datetime.now().strftime("%Y%m%d") + '.log'
 
-@st.cache_resource
-def logger():
-    return MyLogger(level=logging.DEBUG, log_file='./prompt_text/app.log', max_bytes=1024*1024, backup_count=5)    
+@st.cache_resource(ttl='1h')
+def logger():    
+    return MyLogger(level=logging.DEBUG, log_file='./prompt_text/' + log_file_name)    
 
 @st.cache_resource
 def lanch_px_app():
@@ -54,7 +55,8 @@ def lanch_px_app():
 
 lanch_px_app()
 get_session_init()
-        
+logger = logger()
+
 def make_data_instance():
     document_uploader()
     youtube_uploader()
@@ -190,13 +192,19 @@ def main():
                     button[data-testid="baseButton-secondary"] > p {font-size:11px; font-family: Arial;}
                 </style>
                 ''',unsafe_allow_html=True,)
-    st.sidebar.write('''<img width="200" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)
+    st.sidebar.write('''<img width="200" height="60" src="https://us.qcells.com/wp-content/uploads/2023/06/qcells-logo.svg"  alt="Qcells"><br><br>''',unsafe_allow_html=True,)    
     if st.session_state.is_signed_in == False:
         st.markdown(f"""
             <meta http-equiv="refresh" content="0; URL={get_login_str()}">
         """, unsafe_allow_html=True)
         st.stop()
-    st.sidebar.write('Login: ', st.session_state.access_mail)
+
+    if st.session_state.saved_log == False:
+        logger.user_email = st.session_state.access_mail
+        logger.info('access')
+        st.session_state.saved_log = True
+    
+    st.sidebar.write('🔑 ', st.session_state.access_mail)
     col1, col2  = st.columns([1, 5])
     with col1:
         st.session_state.chosen_id = st.selectbox(' ', ('ChatGPT+TechSensing', 'ChatGPT 3.5', 'ChatGPT 4', 'ChatGPT+MyData'), label_visibility="collapsed", key = 'model_select')
@@ -210,15 +218,19 @@ def main():
     
     if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
         if st.session_state.chosen_id == 'ChatGPT 3.5':
+            logger.debug('chatgpt3')
             st.session_state.prompts1.append(prompt)
             st.session_state.messages1.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT 4':
+            logger.debug('chatgpt4')
             st.session_state.prompts2.append(prompt)
             st.session_state.messages2.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT+TechSensing':
+            logger.debug('chatgpt_tech')
             st.session_state.prompts3.append(prompt)
             st.session_state.messages3.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT+MyData':
+            logger.debug('chatgpt3_mydata')
             st.session_state.prompts4.append(prompt)
             st.session_state.messages4.append({"role": "user", "content": prompt})
         
@@ -236,10 +248,13 @@ def main():
             with sub_btn_col2:
                 if len(translatable_docs)>0:
                     btn_trans = st.button("TRANSLATE", on_click = translated_func, key="translate", use_container_width=True)
+                    
                 else:
                     st.session_state.is_done_translate = False
+                    
             if len(translatable_docs)>0:
                 if st.session_state.is_done_translate == True:
+                    logger.info('translate')
                     for trans_doc in translatable_docs:
                         with open('../tmp/translated/' + 'translated_'+ trans_doc.name, "rb") as file:
                             file_name = 'translated_' + trans_doc.name
@@ -332,6 +347,7 @@ def main():
                         st.session_state.messages3.append(message) # Add response to message history        
     
     if st.session_state.chosen_id == "ChatGPT+MyData":
+        get_anno_mydata()
         col1_mychat, col2_mychat = st.columns([3, 2])
         with col1_mychat.container(height=650, border= False):
             message_hist_display(st.session_state.messages4)

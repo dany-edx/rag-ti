@@ -1,0 +1,37 @@
+2024-04-16 16:00:11,031	logger	INFO	edx.0@hanwha.com	
+2024-04-16 17:33:31,857	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 17:34:18,661	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 18:01:03,100	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 18:17:27,116	logger	INFO	edx.0@hanwha.com	
+2024-04-16 21:25:48,009	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 21:29:04,243	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 21:30:35,497	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 21:31:04,296	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:31:50,239	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:31:54,131	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:32:59,751	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:34:24,457	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 21:38:10,505	logger	INFO	digital_scm@us.q-cells.com	
+2024-04-16 21:38:18,695	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:38:20,839	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:38:30,934	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:39:05,590	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:39:23,122	logger	INFO	digital_scm@us.q-cells.com	translate
+2024-04-16 21:40:23,454	logger	INFO	edx.0@hanwha.com	
+2024-04-16 21:40:29,907	logger	INFO	edx.0@hanwha.com	translate
+2024-04-16 21:41:23,045	logger	INFO	dany.shin@hanwha.com	
+2024-04-16 21:41:56,051	logger	INFO	dany.shin@hanwha.com	translate
+2024-04-16 21:56:10,557	logger	INFO	dany.shin@hanwha.com	access
+2024-04-16 22:00:04,905	logger	INFO	edx.0@hanwha.com	access
+2024-04-16 22:01:45,401	logger	INFO	digital_scm@us.q-cells.com	access
+2024-04-16 22:03:26,597	logger	INFO	digital_scm@us.q-cells.com	access
+2024-04-16 22:03:32,234	logger	DEBUG	digital_scm@us.q-cells.com	chatgpt_tech
+2024-04-16 22:03:35,831	logger	DEBUG	digital_scm@us.q-cells.com	chatgpt_tech
+2024-04-16 22:03:48,147	logger	DEBUG	digital_scm@us.q-cells.com	chatgpt_tech
+2024-04-16 22:07:06,074	logger	INFO	digital_scm@us.q-cells.com	access
+2024-04-16 22:27:54,147	logger	INFO	dany.shin@hanwha.com	access
+2024-04-16 22:28:02,819	logger	DEBUG	dany.shin@hanwha.com	chatgpt3
+2024-04-16 22:28:30,948	logger	DEBUG	dany.shin@hanwha.com	chatgpt4
+2024-04-16 22:29:14,445	logger	DEBUG	dany.shin@hanwha.com	chatgpt3_mydata
+2024-04-16 22:32:06,967	logger	DEBUG	dany.shin@hanwha.com	chatgpt3_mydata
+2024-04-16 22:33:25,325	logger	INFO	digital_scm@us.q-cells.com	access

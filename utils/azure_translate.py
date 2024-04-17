@@ -8,7 +8,6 @@ from azure.storage.blob import BlobServiceClient, BlobClient, generate_container
 
 
 class SampleTranslationWithAzureBlob:
-
     def __init__(self):
         self.endpoint = 'https://rag-translator.cognitiveservices.azure.com/'
         self.key = '26d9b4d5fa8141d5a4abc27bfba5875d'
@@ -27,11 +26,14 @@ class SampleTranslationWithAzureBlob:
         blob_service_client = BlobServiceClient(self.storage_endpoint,credential=self.storage_key)
         source_container = self.create_container(blob_service_client,container_name=self.storage_source_container_name)
         target_container = self.create_container(blob_service_client,container_name=self.storage_target_container_name)
-
+                    
         for blob in source_container.list_blobs():
+            print(blob.name, self.document_name)
             if blob.name == self.document_name:   
                 source_container.delete_blobs(self.document_name)
+                
         for blob in target_container.list_blobs():
+            print(blob.name, self.document_name)
             if blob.name == self.document_name:   
                 target_container.delete_blobs(self.document_name)
         
