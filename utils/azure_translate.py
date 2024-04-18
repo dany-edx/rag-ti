@@ -6,7 +6,6 @@ from azure.core.exceptions import ResourceExistsError
 from azure.ai.translation.document import DocumentTranslationClient
 from azure.storage.blob import BlobServiceClient, BlobClient, generate_container_sas
 
-
 class SampleTranslationWithAzureBlob:
     def __init__(self):
         self.endpoint = 'https://rag-translator.cognitiveservices.azure.com/'

@@ -89,12 +89,12 @@ with col0:
     
 with col1:
     cnt_oneday_lag = len(df[(df['type2'] == 'INFO') & (df['dummy'] == 'access\n') & (df['YYYYMMDD'] == yester_date)])
-    st.metric("User access count", "{} visitors".format(len(df_user_access)), "{}".format(len(df_user_access) - cnt_oneday_lag))
+    st.metric("Sessions access count", "{} visitors".format(len(df_user_access)), "{}".format(len(df_user_access) - cnt_oneday_lag))
     with st.expander("show more data"):
         st.dataframe(df_user_access[['email']].reset_index())
 with col2:
     cnt_oneday_lag = len(df[(df['type2'] == 'DEBUG')& (df['YYYYMMDD'] == yester_date)])
-    st.metric("User chat count", "{} chats".format(len(df_chat_count)), "{}".format(len(df_chat_count) - cnt_oneday_lag))
+    st.metric("Sessions chat count", "{} chats".format(len(df_chat_count)), "{}".format(len(df_chat_count) - cnt_oneday_lag))
     with st.expander("show more data"):
         st.write(df_chat_count[['email']].reset_index())
 

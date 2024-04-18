@@ -218,19 +218,19 @@ def main():
     
     if prompt := st.chat_input("Your question", key = 'chat_input_query'): # Prompt for user input and save to chat history
         if st.session_state.chosen_id == 'ChatGPT 3.5':
-            logger.debug('chatgpt3')
+            logger.debug('gpt3')
             st.session_state.prompts1.append(prompt)
             st.session_state.messages1.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT 4':
-            logger.debug('chatgpt4')
+            logger.debug('gpt4')
             st.session_state.prompts2.append(prompt)
             st.session_state.messages2.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT+TechSensing':
-            logger.debug('chatgpt_tech')
+            logger.debug('tech_intel')
             st.session_state.prompts3.append(prompt)
             st.session_state.messages3.append({"role": "user", "content": prompt})
         if st.session_state.chosen_id == 'ChatGPT+MyData':
-            logger.debug('chatgpt3_mydata')
+            logger.debug('gpt_mydata')
             st.session_state.prompts4.append(prompt)
             st.session_state.messages4.append({"role": "user", "content": prompt})
         
